@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:secrets": "powershell.exe -ExecutionPolicy Bypass -File scripts/check-secrets.ps1"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",
@@ -16,6 +17,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.11.0",
     "firebase-admin": "^13.7.0",
+    "jose": "^6.2.2",
     "lucide-react": "^1.7.0",
     "mapbox-gl": "^3.21.0",
     "next": "^15.5.14",

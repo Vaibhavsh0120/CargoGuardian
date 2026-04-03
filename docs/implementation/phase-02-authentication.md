@@ -41,6 +41,7 @@ The result of this phase should be that an operator can log in, maintain a sessi
 - `features/auth/hooks/useSignup.ts`
 - `features/auth/services/auth-client.ts`
 - `features/auth/services/auth-server.ts`
+- `features/auth/services/user-profile-server.ts`
 - `features/auth/types/auth.ts`
 - `hooks/useAuth.ts`
 - `lib/auth/session.ts`
@@ -156,3 +157,35 @@ The result of this phase should be that an operator can log in, maintain a sessi
 **Critical for demo**
 
 The demo cannot proceed without authentication because the dashboard-first app experience starts after login.
+
+## Implementation Notes
+
+Phase 2 has been implemented.
+
+Notable implementation details:
+
+- The provided Firebase web configuration was wired into `.env` for local development.
+- `measurementId` was added to env storage, but Firebase Analytics was intentionally not initialized because it is not needed for authentication.
+- Authentication is implemented using the Firebase browser SDK for email/password and Google sign-in.
+- The auth surface includes signup confirm-password validation and a password reset flow.
+- Server-side session persistence now uses true Firebase Admin session cookies stored in an `httpOnly` cookie.
+- Session validation is performed through `firebase-admin` in `lib/auth/session.ts`.
+- Middleware and server-side guards now rely on the Firebase Admin session-cookie flow instead of a temporary token bridge.
+- Firestore user profile creation now happens server-side through `features/auth/services/user-profile-server.ts`.
+- The signup flow creates or merges `users/{uid}` profile documents and sets initial role and read-only claims.
+- Session refresh and authenticated layout flows also ensure a user profile exists, which keeps the repo aligned with the later Firestore-based authorization plan.
+- The Firebase service-account credentials are expected in environment variables and are loaded through `services/firebase/admin.ts`.
+- Local repository protections were added so `.env`, service-account JSON files, and common key files are ignored by Git and checked by a pre-commit secret scan.
+- Auth routes now fall back to Firebase Auth user data if Firestore profile access is temporarily unavailable, so sign-in can still succeed while the Firestore API is being enabled.
+
+Validation completed:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+Follow-up deferred to later phases:
+
+- expand Firestore-backed user profiles beyond the initial auth fields so Settings and role management do not rely only on auth defaults
+- add explicit admin, operator, and viewer management workflows once the management surfaces exist
+- if mobile redirect-based auth is needed later, add a Google redirect fallback alongside the popup flow

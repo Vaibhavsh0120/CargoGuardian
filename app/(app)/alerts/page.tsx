@@ -4,8 +4,8 @@ export default function AlertsPage() {
   return (
     <RoutePlaceholder
       eyebrow="Alerts"
-      title="Alerts page placeholder"
-      description="Alert feeds, severity states, and resolution flows are introduced in Phase 7."
+      title="Alert center"
+      description="Active operational alerts and resolution workflows will appear here when monitoring rules are enabled."
     />
   );
 }

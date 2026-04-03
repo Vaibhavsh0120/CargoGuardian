@@ -1,5 +1,6 @@
 import { Bell, Search, ShieldCheck } from "lucide-react";
 
+import { AuthStatusControls } from "@/features/auth/components/AuthStatusControls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ export function TopStatusBar() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Foundation ready
           </Badge>
+          <AuthStatusControls />
           <Button size="icon" variant="ghost" disabled aria-label="Notifications placeholder">
             <Bell className="h-4 w-4" />
           </Button>

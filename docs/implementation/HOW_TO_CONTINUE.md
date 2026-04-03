@@ -27,6 +27,8 @@ Read [../../AGENTS.md](../../AGENTS.md) first. It contains the repository-wide o
 - Do not expose Firebase Admin, Blynk, TigerGraph, or privileged Mapbox secrets to the client.
 - Do not insert fake static operational data into production paths.
 - If demo data is required, keep it behind `NEXT_PUBLIC_DEMO_MODE` and document the fallback.
+- Do not put internal phase labels, TODO language, placeholder wording, or developer-only notes on finalized user-facing screens.
+- Preserve end-user wording on finalized screens even when later phases extend those screens.
 
 ## Expected Execution Pattern
 
@@ -61,12 +63,23 @@ For every phase:
 
 ## Current State At Time Of Writing
 
-- Phase 1 is complete.
-- The project has a working Next.js foundation, base shell placeholders, UI primitives, environment scaffolding, Firebase bootstraps, and a health route.
-- Authentication, business data flows, and integrations are not yet implemented.
+- Phases 1 and 2 are complete.
+- The project now has:
+  - Next.js foundation
+  - shared providers and theme system
+  - Firebase client auth wiring
+  - login/signup flows, including Google sign-in
+  - auth session APIs
+  - protected route/layout guards
+  - logout flow
+- Finalized user-facing screens at this stage:
+  - `/login`
+  - `/signup`
+  - `/forgot-password`
+- Fleet, devices, telemetry, alerts, map, analytics, and data-rich shell behavior are still pending.
 
 ## Next Expected Phase
 
 The next implementation phase is:
 
-- [phase-02-authentication.md](./phase-02-authentication.md)
+- [phase-03-app-shell.md](./phase-03-app-shell.md)

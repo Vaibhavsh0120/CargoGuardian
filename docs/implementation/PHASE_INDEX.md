@@ -2,14 +2,14 @@
 
 This repository is being built in controlled phases. Each phase is intended to leave the application in a runnable, reviewable state before the next layer is added.
 
-Phase 1 is complete. All later phases remain pending and should be executed in order unless a later document explicitly states that some tasks may be parallelized safely.
+Phases 1 and 2 are complete. All later phases remain pending and should be executed in order unless a later document explicitly states that some tasks may be parallelized safely.
 
 Before starting any phase, read [../../AGENTS.md](../../AGENTS.md).
 
 ## Phase Order
 
 1. Phase 1 - Project Initialization `(completed)`
-2. Phase 2 - Authentication System
+2. Phase 2 - Authentication System `(completed)`
 3. Phase 3 - App Shell and Navigation
 4. Phase 4 - Fleet and Train Management
 5. Phase 5 - Device Pairing and Hardware Management
@@ -24,7 +24,7 @@ Before starting any phase, read [../../AGENTS.md](../../AGENTS.md).
 | Phase | Status | Depends On | Difficulty | Demo Relevance | Primary Output |
 | --- | --- | --- | --- | --- | --- |
 | 1 - Project Initialization | Completed | None | Medium | Critical | Runnable Next.js foundation, theme, providers, Firebase bootstraps |
-| 2 - Authentication System | Pending | 1 | Medium | Critical | Firebase Auth, protected routes, session handling |
+| 2 - Authentication System | Completed | 1 | Medium | Critical | Firebase Auth, protected routes, session handling |
 | 3 - App Shell and Navigation | Pending | 1, 2 | Medium | Critical | Production shell, desktop/mobile navigation, route scaffolding |
 | 4 - Fleet and Train Management | Pending | 2, 3 | High | Critical | Fleet list, train detail, add train flow |
 | 5 - Device Pairing and Hardware Management | Pending | 4 | High | Critical | Device inventory, pairing workflow, assignment lifecycle |
@@ -47,7 +47,7 @@ Before starting any phase, read [../../AGENTS.md](../../AGENTS.md).
 
 The minimum convincing hackathon demo requires these phases:
 
-- Phase 2 - Authentication System
+- Phase 2 - Authentication System `(completed)`
 - Phase 3 - App Shell and Navigation
 - Phase 4 - Fleet and Train Management
 - Phase 5 - Device Pairing and Hardware Management
@@ -78,3 +78,9 @@ A phase is considered complete only when all of the following are true:
 - Validation steps in the phase document have been executed.
 - `npm run lint`, `npm run typecheck`, and `npm run build` pass.
 - The phase file is updated to reflect any deviations or newly discovered constraints.
+
+## Current Next Phase
+
+The next implementation phase is:
+
+- [phase-03-app-shell.md](./phase-03-app-shell.md)

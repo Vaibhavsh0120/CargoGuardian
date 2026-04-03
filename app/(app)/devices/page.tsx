@@ -4,8 +4,8 @@ export default function DevicesPage() {
   return (
     <RoutePlaceholder
       eyebrow="Devices"
-      title="Devices page placeholder"
-      description="Device inventory, pairing, and assignment management are implemented in Phase 5."
+      title="Device management"
+      description="Device inventory, pairing, and assignment controls will appear here when hardware management is connected."
     />
   );
 }

@@ -65,7 +65,7 @@ export function AppSidebar() {
       </nav>
 
       <div className="border-t border-border/60 px-6 py-5 text-xs text-muted-foreground">
-        Phase 1 foundation shell
+        Rail cargo monitoring console
       </div>
     </aside>
   );

@@ -4,8 +4,8 @@ export default function FleetPage() {
   return (
     <RoutePlaceholder
       eyebrow="Fleet"
-      title="Fleet page placeholder"
-      description="The fleet list and train drill-down experience are implemented in Phase 4."
+      title="Fleet workspace"
+      description="Fleet browsing and train drill-down will appear here once train operations data is connected."
     />
   );
 }

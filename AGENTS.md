@@ -27,26 +27,27 @@ The system must deploy cleanly on Vercel and keep secrets out of the client.
 
 ## 2. Current State
 
-At the time this file was created:
+At the time this file was last updated:
 
-- **Phase 1 is complete**
+- **Phases 1 and 2 are complete**
 - The repository already contains:
   - Next.js 15 App Router foundation
   - TypeScript configuration
   - Tailwind theme setup
   - base UI primitives in `components/ui/`
   - root providers
-  - placeholder auth pages
-  - protected app layout shell placeholder
+  - functional auth pages
+  - auth APIs and protected route guards
+  - Firebase Admin session cookies for authenticated routes
+  - server-side Firestore user profile creation and hydration for authenticated users
   - placeholder app routes
   - Firebase client/admin initialization
+  - local commit-safety protections for env files, service-account JSON files, and common key material
   - health endpoint
   - phase planning documents under `docs/implementation/`
 
 What is **not** yet implemented:
 
-- Real authentication flow
-- Protected session enforcement
 - Real train, device, telemetry, alert, map, analytics, or history features
 - Firestore data access services
 - Blynk integration
@@ -258,8 +259,10 @@ Do not invent a conflicting Firestore structure unless absolutely necessary. If 
 ### Firebase
 
 - Auth is authoritative for identity.
-- Firestore is the app’s operational system of record.
+- Firestore is the app's operational system of record.
 - Use Firebase Admin on the server for privileged operations.
+- Session persistence is currently implemented with Firebase Admin session cookies, not a client-only token bridge.
+- User profile creation currently happens server-side during signup and session restoration flows.
 
 ### Blynk
 
@@ -322,7 +325,24 @@ Unless the user explicitly instructs otherwise:
 - stop after finishing that phase
 - do not start the next phase automatically
 
-## 16. Required Documentation Updates After Every Completed Phase
+## 16. Finalized Screen Rules
+
+Some user-facing screens become effectively final before the entire product is complete. When a screen is marked finalized, future work must preserve its end-user tone and must not reintroduce internal implementation language.
+
+Rules:
+
+- Do not show users labels such as `Phase 1`, `Phase 2`, `TODO`, `placeholder`, `planned`, or implementation-status copy on finalized screens.
+- Do not add engineering notes, internal sequencing, or architecture commentary into user-facing copy.
+- If a finalized screen needs new functionality later, extend it without regressing its tone back into developer-facing language.
+- When a new screen becomes stable and user-ready, add it to the finalized screen list in this file.
+
+Current finalized user-facing screens:
+
+- `/login`
+- `/signup`
+- `/forgot-password`
+
+## 17. Required Documentation Updates After Every Completed Phase
 
 Every time a phase is completed, you must update:
 
@@ -346,7 +366,7 @@ If the phase changed environment variables, APIs, setup requirements, or route s
 - `.env.example`
 - setup docs in `docs/`
 
-## 17. Phase Completion Checklist
+## 18. Phase Completion Checklist
 
 A phase is not complete until all of these are true:
 
@@ -361,7 +381,7 @@ A phase is not complete until all of these are true:
 
 If one of those fails, the phase is not done.
 
-## 18. How To Record Deviations
+## 19. How To Record Deviations
 
 If implementation differs from the phase plan:
 
@@ -378,7 +398,7 @@ If the change affects multiple future phases, also update:
 - `GLOBAL_TODO.md`
 - this `AGENTS.md` file if the change is fundamental
 
-## 19. Validation Expectations
+## 20. Validation Expectations
 
 For every phase, at minimum run:
 
@@ -394,7 +414,7 @@ If integration logic was added, also verify:
 - fallback behavior exists for unavailable services
 - errors are surfaced cleanly in UI
 
-## 20. Code Quality Rules
+## 21. Code Quality Rules
 
 - Prefer small modular files.
 - Keep TypeScript strict.
@@ -405,7 +425,7 @@ If integration logic was added, also verify:
 - Add meaningful loading and error states.
 - Keep the app deployable at every step.
 
-## 21. Files To Watch Carefully
+## 22. Files To Watch Carefully
 
 These files are important coordination points and must stay consistent:
 
@@ -421,8 +441,10 @@ These files are important coordination points and must stay consistent:
 - `app/(app)/layout.tsx`
 - `services/firebase/client.ts`
 - `services/firebase/admin.ts`
+- `.gitignore`
+- `.githooks/pre-commit`
 
-## 22. If You Are The Next AI Agent
+## 23. If You Are The Next AI Agent
 
 Do this:
 
@@ -442,9 +464,10 @@ Do not do this:
 - overwrite the architecture without documentation
 - silently change data models
 - leave the docs stale after code changes
+- commit or stage secrets, env files, private keys, or service-account JSON files
 
-## 23. Current Next Step
+## 24. Current Next Step
 
 At the time of writing, the next expected implementation step is:
 
-- `docs/implementation/phase-02-authentication.md`
+- `docs/implementation/phase-03-app-shell.md`

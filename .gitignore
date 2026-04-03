@@ -14,3 +14,9 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 /stitch
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceAccount*.json
+*.pem
+*.p12
+.githooks/.cache

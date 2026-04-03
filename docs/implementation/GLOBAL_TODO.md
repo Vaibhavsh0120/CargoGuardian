@@ -4,8 +4,6 @@ This file tracks all remaining work across the project. It is intentionally broa
 
 ## Remaining Core Work
 
-- Implement Firebase Auth login, signup, logout, and session verification.
-- Add middleware and route-group protection for authenticated application routes.
 - Replace shell placeholders with production navigation and contextual status indicators.
 - Build train selector context and persist selected train state correctly.
 - Implement fleet list, train detail, and add train flows.
@@ -20,6 +18,13 @@ This file tracks all remaining work across the project. It is intentionally broa
 - Build dashboard aggregation and reduce query fan-out.
 - Add complete empty, error, stale, and offline states.
 - Write setup documentation for Firebase, Blynk, TigerGraph, and Vercel deployment.
+
+## Authentication Follow-Ups
+
+- Add profile hydration from Firestore so roles and preferences do not rely only on token claims/defaults.
+- Expand Firestore-backed user profiles so Settings can manage preferences, operator metadata, and notification options.
+- Add explicit admin tools for role management, account lifecycle controls, and read-only access assignment.
+- Add a Google redirect-based auth fallback if later mobile or popup-restricted environments need it.
 
 ## Required Documentation Work
 
@@ -54,7 +59,7 @@ This file tracks all remaining work across the project. It is intentionally broa
 
 - Current UI primitives are intentionally lightweight Phase 1 implementations and may need to be upgraded to fuller shadcn component behavior when the relevant interactions arrive.
 - Theme switching is local-only and not yet persisted.
-- Firebase client and admin initialization exist, but auth wrappers and Firestore service layers are not yet implemented.
+- Firebase auth wrappers are implemented, but Firestore domain service layers for trains, devices, telemetry, alerts, analytics, and history are still pending.
 - Placeholder routes exist for shell completeness and should be replaced phase-by-phase rather than left in place.
 
 ## Demo Preparation TODO

@@ -1,8 +1,12 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
 
 import { getClientEnv } from "@/lib/env/client";
 
 let firebaseClientApp: FirebaseApp | null = null;
+let firebaseClientAuth: Auth | null = null;
+let firebaseClientDb: Firestore | null = null;
 
 export function getFirebaseClientApp() {
   if (firebaseClientApp) {
@@ -34,4 +38,22 @@ export function getFirebaseClientApp() {
       });
 
   return firebaseClientApp;
+}
+
+export function getFirebaseClientAuth() {
+  if (firebaseClientAuth) {
+    return firebaseClientAuth;
+  }
+
+  firebaseClientAuth = getAuth(getFirebaseClientApp());
+  return firebaseClientAuth;
+}
+
+export function getFirebaseClientDb() {
+  if (firebaseClientDb) {
+    return firebaseClientDb;
+  }
+
+  firebaseClientDb = getFirestore(getFirebaseClientApp());
+  return firebaseClientDb;
 }

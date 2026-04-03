@@ -4,9 +4,20 @@ CargoGuardian is a dashboard-first rail cargo monitoring platform for trains equ
 
 ## Current Status
 
-- Phase 1 is complete.
-- The repository contains the production foundation: App Router setup, theme system, shared providers, placeholder routes, Firebase bootstraps, and a health check endpoint.
-- Business features are intentionally being added in later phases.
+- Phases 1 and 2 are complete.
+- The repository now contains:
+  - App Router foundation
+  - theme system and shared providers
+  - Firebase client auth integration
+  - Firebase Admin session-cookie authentication
+  - server-side Firestore user profile creation for authenticated users
+  - email/password and Google auth flows
+  - password reset flow
+  - login, signup, logout, and session APIs
+  - protected app layout guard
+  - commit-safety protections for local secrets and service-account files
+  - placeholder business routes for later phases
+- Fleet, devices, telemetry, alerts, map, analytics, and final dashboard workflows are intentionally being added in later phases.
 
 ## Development Phases
 

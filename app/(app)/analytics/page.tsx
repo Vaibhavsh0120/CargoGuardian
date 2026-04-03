@@ -4,8 +4,8 @@ export default function AnalyticsPage() {
   return (
     <RoutePlaceholder
       eyebrow="Analytics"
-      title="Analytics page placeholder"
-      description="TigerGraph-backed analytics cards and drill-downs are planned for Phase 9."
+      title="Analytics workspace"
+      description="Network intelligence, anomaly detection, and route insights will appear here when analytics services are connected."
     />
   );
 }

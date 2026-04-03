@@ -4,8 +4,8 @@ export default function MapPage() {
   return (
     <RoutePlaceholder
       eyebrow="Map"
-      title="Map page placeholder"
-      description="Mapbox routing and live train markers are scheduled for Phase 8."
+      title="Route map"
+      description="Live train positions, route overlays, and location context will appear here when map services are connected."
     />
   );
 }

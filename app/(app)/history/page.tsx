@@ -4,8 +4,8 @@ export default function HistoryPage() {
   return (
     <RoutePlaceholder
       eyebrow="History"
-      title="History page placeholder"
-      description="Operational event history and telemetry logs are introduced in Phase 7."
+      title="Operations history"
+      description="Telemetry logs, event timelines, and historical records will appear here when history services are connected."
     />
   );
 }
