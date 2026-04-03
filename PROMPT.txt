@@ -1,0 +1,96 @@
+You are continuing work on the CargoGuardian repository.
+
+Before writing any code, you must read and follow the repository planning and operating documents in this exact order:
+
+1. AGENTS.md
+2. docs/implementation/PHASE_INDEX.md
+3. docs/implementation/HOW_TO_CONTINUE.md
+4. docs/implementation/GLOBAL_TODO.md
+5. the next incomplete phase file in docs/implementation/
+
+Your job is to automatically identify the next incomplete phase and implement only that phase.
+
+Do not skip phases.
+Do not jump ahead.
+Do not implement unrelated future features.
+Do not rewrite the architecture unless absolutely necessary, and if you do, update the docs in the same turn.
+
+Core execution rules:
+
+- Work phase-by-phase.
+- Keep the app runnable at all times.
+- Use the existing architecture, folder structure, and planning docs as the source of truth.
+- Reuse existing components and services where appropriate.
+- Keep business logic out of page files when possible.
+- Keep secrets off the client.
+- Route all privileged integration access through server-side APIs/services.
+- Do not mix fake production data into real flows.
+- If demo data is needed, isolate it behind NEXT_PUBLIC_DEMO_MODE and document it.
+
+At the start of work:
+
+1. Read the planning files.
+2. Tell me which phase is next.
+3. Summarize what you are about to implement in that phase.
+4. Then begin implementation.
+
+While working:
+
+- Make changes directly in the repository.
+- Keep changes scoped to the current phase.
+- Add loading, empty, and error states where the phase requires them.
+- Run validation before finishing:
+  - npm run lint
+  - npm run typecheck
+  - npm run build
+
+At the end of the phase:
+
+1. Update docs/implementation/PHASE_INDEX.md
+2. Update the phase file with implementation notes, deviations, and any deferred items
+3. Update docs/implementation/GLOBAL_TODO.md if new follow-up items were discovered
+4. Update README.md if the project status changed materially
+5. Then stop and wait for my next instruction
+
+Question policy:
+
+- If you can safely proceed using the repository plans and existing code, do so without asking me unnecessary questions.
+- If something is ambiguous, risky, missing, or requires a product decision, ask me directly.
+- Keep questions short and specific.
+- Ask only the minimum needed to unblock the phase.
+- If there are 2-3 reasonable options, recommend one and briefly explain why.
+
+Examples of when you should ask me:
+
+- a credential, environment value, or external service detail is required and cannot be inferred
+- a user-facing behavior has multiple valid interpretations and the choice affects later phases
+- the current code conflicts with the documented plan
+- a destructive or irreversible change is required
+
+Examples of when you should NOT ask me:
+
+- if the planning docs already define the phase scope
+- if the next step is obvious from the repository structure
+- if you can implement a safe default and document it
+
+Technical expectations:
+
+- Use Next.js 15 App Router
+- Use TypeScript strictly
+- Use the existing Tailwind/theme system
+- Follow the CargoGuardian design language already defined in the repo
+- Keep desktop sidebar + top bar and mobile bottom navigation patterns
+- Keep dashboard as the default landing page after login
+
+When you finish your response for the phase, include:
+
+- what you changed
+- what you validated
+- what remains for the next phase
+- whether you had to update the planning docs
+
+Important:
+
+- The repository already contains a structured implementation plan.
+- Your job is to continue that plan, not invent a new one.
+- Start now by reading the planning files and implementing the next incomplete phase.
