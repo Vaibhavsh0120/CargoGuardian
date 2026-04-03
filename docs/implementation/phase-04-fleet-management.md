@@ -23,6 +23,10 @@ The result should be that an operator can view the fleet, create a train asset, 
 - Train selector using live Firestore-backed data
 - Route references stored on trains
 - Train status and freshness summaries
+- Role-aware access for `worker`, `train master`, and `admin`
+- Assignment records so the same train can be shared across accounts with different privileges
+- Admin-only onboarding endpoint that issues invite-only URLs for admin accounts
+- Admin and train master panels for granting/removing train access plus worker requests
 
 ## Files To Create
 
@@ -78,6 +82,14 @@ The result should be that an operator can view the fleet, create a train asset, 
   - full train document and immediate summary
 - `GET /api/trains/[trainId]/summary`
   - focused train summary for drill-down and later widget use
+- `GET /api/trains/assignments`
+  - list assignment records scoped to the authenticated user/role
+- `POST /api/trains/access`
+  - grant a train to a user (admin/master)
+- `POST /api/trains/access/request`
+  - worker/master can request access by email; notifications stored and actionable by admin/master
+- `DELETE /api/trains/access`
+  - revoke a train assignment
 
 ## Services To Implement
 
@@ -110,11 +122,22 @@ The result should be that an operator can view the fleet, create a train asset, 
 - Firestore `trains`
 - Firestore `routes`
 - shell train selector from Phase 3
+- Firestore `trainAssignments` for storing access metadata
+- `users` profiles must track role (worker/master/admin) so routes can enforce scope
 
 ## Dependencies
 
 - Depends on Phase 2 and Phase 3.
 - Must complete before Phase 5, because device pairing requires real train records.
+- API and UI must enforce that `admin` sees every train, assigned `train masters` see their trains at any time, and `workers` only get pre-departure clearance metadata for trains they are allowed to inspect.
+- Signup flow creates worker/master accounts via a role selector, while admins are added through a private invite URL (not linked from the main site).
+
+## Access Workflow
+
+- Admins recover the fleet on `/admin/access`, grant/revoke training access for any user by email, and approve request tickets from masters/workers.
+- Masters pass train access to workers via `/master/access`, but only for trains they already own; their page also surfaces worker requests.
+- Workers (and masters for additional workers) raise `/access/request` tickets that carry an email and reason; the owning admin/master can accept or reject them.
+- Successful grants create `trainAssignments` documents (`trainId`, `userId`, `role`, `grantedBy`, `grantedAt`, `expiresAt?`); revocations cascade to telemetry/alerts access.
 
 ## Validation Checklist
 
@@ -125,6 +148,8 @@ The result should be that an operator can view the fleet, create a train asset, 
 - Train detail loads the selected train.
 - Dashboard summary reflects actual train counts.
 - `npm run lint`, `npm run typecheck`, and `npm run build` pass.
+- Role enforcement is validated: admin can list everything, train master views only assigned trains anytime, worker views only clearance-stage trains they are mapped to before departure.
+- Document the lifecycle for admin/master giving/removing train access by email so future device/assignment phases can implement the workflows.
 
 ## Deliverables
 

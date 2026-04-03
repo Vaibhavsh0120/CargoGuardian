@@ -4,8 +4,6 @@ This file tracks all remaining work across the project. It is intentionally broa
 
 ## Remaining Core Work
 
-- Replace shell placeholders with production navigation and contextual status indicators.
-- Build train selector context and persist selected train state correctly.
 - Implement fleet list, train detail, and add train flows.
 - Implement device inventory, device detail, pair device wizard, and assignment history.
 - Add Blynk device validation and telemetry ingestion routes.

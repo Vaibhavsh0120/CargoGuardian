@@ -148,3 +148,32 @@ These components should become the canonical shell pieces reused across later fe
 **Critical for demo**
 
 Even though Phase 1 introduced placeholders, this phase is required to make the app feel like a cohesive product rather than a collection of routes.
+
+## Implementation Notes
+
+Phase 3 has been implemented.
+
+Notable implementation details:
+
+- The protected shell now uses a production-oriented desktop sidebar, mobile bottom navigation, shared top header, and standardized page framing.
+- Route-aware navigation is centralized in `lib/constants/routes.ts`, which now drives both desktop and mobile navigation state.
+- Selected train state is handled by `TrainContextProvider`, fetched from `GET /api/trains`, and persisted in local storage so later train-scoped pages can inherit the same selection.
+- `GET /api/trains` currently returns a minimal selector dataset only. It reads from Firestore when available and falls back to isolated demo data when `NEXT_PUBLIC_DEMO_MODE=true`.
+- `GET /api/system/status` was implemented to power shell status badges without exposing server secrets to the client.
+- Shared `LoadingPanel`, `EmptyState`, and `ErrorState` components were added and connected to the protected route group and core app pages.
+- Placeholder app routes remain in place, but they now render inside the real shell and use the shared page header and state conventions instead of Phase 1 card placeholders.
+
+Validation completed:
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run build`
+
+Manual follow-up:
+
+- Re-run the authenticated browser checklist in a configured local environment to verify active navigation highlighting and train selector persistence end-to-end with a live session cookie.
+
+Follow-up deferred to later phases:
+
+- expand `GET /api/trains` from selector-only reads into the richer fleet and dashboard data contracts planned for Phase 4
+- replace the dashboard shell-readiness cards with real fleet summary content once train records and dashboard summary services exist

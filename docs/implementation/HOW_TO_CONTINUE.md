@@ -63,7 +63,7 @@ For every phase:
 
 ## Current State At Time Of Writing
 
-- Phases 1 and 2 are complete.
+- Phases 1, 2, and 3 are complete.
 - The project now has:
   - Next.js foundation
   - shared providers and theme system
@@ -72,14 +72,18 @@ For every phase:
   - auth session APIs
   - protected route/layout guards
   - logout flow
+  - production protected app shell and navigation
+  - route-aware desktop and mobile navigation
+  - train selector context with persisted selection
+  - shell loading/error state conventions
 - Finalized user-facing screens at this stage:
   - `/login`
   - `/signup`
   - `/forgot-password`
-- Fleet, devices, telemetry, alerts, map, analytics, and data-rich shell behavior are still pending.
+- Fleet, devices, telemetry, alerts, map, analytics, and data-rich train workflows are still pending.
 
 ## Next Expected Phase
 
 The next implementation phase is:
 
-- [phase-03-app-shell.md](./phase-03-app-shell.md)
+- [phase-04-fleet-management.md](./phase-04-fleet-management.md)

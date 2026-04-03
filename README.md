@@ -4,7 +4,7 @@ CargoGuardian is a dashboard-first rail cargo monitoring platform for trains equ
 
 ## Current Status
 
-- Phases 1 and 2 are complete.
+- Phases 1, 2, and 3 are complete.
 - The repository now contains:
   - App Router foundation
   - theme system and shared providers
@@ -14,9 +14,12 @@ CargoGuardian is a dashboard-first rail cargo monitoring platform for trains equ
   - email/password and Google auth flows
   - password reset flow
   - login, signup, logout, and session APIs
-  - protected app layout guard
+  - production protected app shell with desktop/mobile navigation
+  - train selector context with persisted selection
+  - shell loading, empty, and error state components
+  - protected app layout guard and shell status APIs
   - commit-safety protections for local secrets and service-account files
-  - placeholder business routes for later phases
+  - placeholder business routes inside the real application shell
 - Fleet, devices, telemetry, alerts, map, analytics, and final dashboard workflows are intentionally being added in later phases.
 
 ## Development Phases

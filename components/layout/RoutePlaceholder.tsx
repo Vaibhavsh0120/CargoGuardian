@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/states/EmptyState";
 
 export function RoutePlaceholder({
   eyebrow,
@@ -10,16 +11,9 @@ export function RoutePlaceholder({
   description: string;
 }>) {
   return (
-    <Card className="max-w-3xl border-white/70 shadow-panel">
-      <CardHeader className="space-y-3">
-        <p className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-secondary">
-          {eyebrow}
-        </p>
-        <CardTitle className="font-display text-3xl">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <PageHeader eyebrow={eyebrow} title={title} description={description} />
+      <EmptyState title={`${title} is staged for operational data`} description={description} />
+    </div>
   );
 }

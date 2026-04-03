@@ -29,7 +29,7 @@ The system must deploy cleanly on Vercel and keep secrets out of the client.
 
 At the time this file was last updated:
 
-- **Phases 1 and 2 are complete**
+- **Phases 1, 2, and 3 are complete**
 - The repository already contains:
   - Next.js 15 App Router foundation
   - TypeScript configuration
@@ -40,7 +40,9 @@ At the time this file was last updated:
   - auth APIs and protected route guards
   - Firebase Admin session cookies for authenticated routes
   - server-side Firestore user profile creation and hydration for authenticated users
-  - placeholder app routes
+  - production app shell with desktop/mobile navigation
+  - train selector context with persistence and shell data APIs
+  - standardized shell loading and error states
   - Firebase client/admin initialization
   - local commit-safety protections for env files, service-account JSON files, and common key material
   - health endpoint
@@ -470,4 +472,4 @@ Do not do this:
 
 At the time of writing, the next expected implementation step is:
 
-- `docs/implementation/phase-03-app-shell.md`
+- `docs/implementation/phase-04-fleet-management.md`

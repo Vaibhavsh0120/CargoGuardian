@@ -10,7 +10,7 @@ Before starting any phase, read [../../AGENTS.md](../../AGENTS.md).
 
 1. Phase 1 - Project Initialization `(completed)`
 2. Phase 2 - Authentication System `(completed)`
-3. Phase 3 - App Shell and Navigation
+3. Phase 3 - App Shell and Navigation `(completed)`
 4. Phase 4 - Fleet and Train Management
 5. Phase 5 - Device Pairing and Hardware Management
 6. Phase 6 - Telemetry and Real-Time Updates
@@ -25,7 +25,7 @@ Before starting any phase, read [../../AGENTS.md](../../AGENTS.md).
 | --- | --- | --- | --- | --- | --- |
 | 1 - Project Initialization | Completed | None | Medium | Critical | Runnable Next.js foundation, theme, providers, Firebase bootstraps |
 | 2 - Authentication System | Completed | 1 | Medium | Critical | Firebase Auth, protected routes, session handling |
-| 3 - App Shell and Navigation | Pending | 1, 2 | Medium | Critical | Production shell, desktop/mobile navigation, route scaffolding |
+| 3 - App Shell and Navigation | Completed | 1, 2 | Medium | Critical | Production shell, desktop/mobile navigation, route scaffolding |
 | 4 - Fleet and Train Management | Pending | 2, 3 | High | Critical | Fleet list, train detail, add train flow |
 | 5 - Device Pairing and Hardware Management | Pending | 4 | High | Critical | Device inventory, pairing workflow, assignment lifecycle |
 | 6 - Telemetry and Real-Time Updates | Pending | 5 | High | Critical | Live telemetry, current snapshots, streaming/polling |
@@ -83,4 +83,4 @@ A phase is considered complete only when all of the following are true:
 
 The next implementation phase is:
 
-- [phase-03-app-shell.md](./phase-03-app-shell.md)
+- [phase-04-fleet-management.md](./phase-04-fleet-management.md)
