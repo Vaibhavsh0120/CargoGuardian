@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import type { Route } from "next";
+import type { ComponentType } from "react";
 import {
+  AlertTriangle,
   ArrowRight,
   Bell,
   ChartColumnIncreasing,
-  MemoryStick,
+  Map,
   Plus,
   TrainFront,
-  AlertTriangle,
   Wifi,
   WifiOff
 } from "lucide-react";
@@ -23,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/features/auth/hooks/useSession";
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { appRouteDefinitions } from "@/lib/constants/routes";
 import { trainStatusLabels, type TrainSummary } from "@/types/train";
@@ -58,15 +60,16 @@ const quickLinks = [
     icon: ChartColumnIncreasing
   },
   {
-    href: appRouteDefinitions.devices.href,
-    title: "Manage devices",
-    description: "Pair hardware devices and manage sensor assignments.",
-    icon: MemoryStick
+    href: appRouteDefinitions.map.href,
+    title: "Open map",
+    description: "View train routes and live GPS tracking.",
+    icon: Map
   }
 ];
 
 export default function DashboardPage() {
-  const { isError, isLoading, refresh, selectedTrain, source, trains } = useTrainContext();
+  const { isError, isLoading, refresh, selectedTrain, trains } = useTrainContext();
+  const sessionQuery = useSession();
   const summaryQuery = useQuery({
     queryKey: ["dashboard", "summary"],
     queryFn: fetchDashboardSummary,
@@ -90,6 +93,7 @@ export default function DashboardPage() {
   }
 
   const summary = summaryQuery.data?.summary;
+  const canCreateTrain = sessionQuery.data?.user?.role === "admin";
 
   return (
     <div className="space-y-6">
@@ -98,28 +102,33 @@ export default function DashboardPage() {
         title="Operations dashboard"
         description={
           selectedTrain
-            ? `Monitoring ${selectedTrain.label} — ${selectedTrain.code}.`
-            : "Select a train from your fleet to begin monitoring."
+            ? `Monitoring ${selectedTrain.label} - ${selectedTrain.code}.`
+            : "Select a train from your fleet to review its current operational state."
         }
         actions={
-          <Link href={"/trains/new" as Route} className={buttonVariants()}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            Add train
-          </Link>
+          canCreateTrain ? (
+            <Link href={"/trains/new" as Route} className={buttonVariants()}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add train
+            </Link>
+          ) : undefined
         }
       />
 
       {!trains.length ? (
         <EmptyState
           title="No trains in your fleet"
-          description="Register your first train to start monitoring cargo and telemetry."
+          description={
+            canCreateTrain
+              ? "Register your first train to start monitoring cargo and telemetry."
+              : "No trains are currently visible in your workspace. Request access from a master or admin if needed."
+          }
           icon={TrainFront}
-          actionHref={"/trains/new" as Route}
-          actionLabel="Add train"
+          actionHref={canCreateTrain ? ("/trains/new" as Route) : undefined}
+          actionLabel={canCreateTrain ? "Add train" : undefined}
         />
       ) : (
         <>
-          {/* Fleet summary cards */}
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard
               label="Total"
@@ -157,18 +166,12 @@ export default function DashboardPage() {
             />
           </div>
 
-          {/* Active train hero card + quick links */}
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
             <Card className="border-white/70 bg-card/90 shadow-panel">
               <CardHeader className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant="secondary">Train context ready</Badge>
-                  {selectedTrain ? (
-                    <Badge>{trainStatusLabels[selectedTrain.status]}</Badge>
-                  ) : null}
-                  <Badge variant="outline">
-                    {source === "demo" ? "Demo mode" : "Live data"}
-                  </Badge>
+                  {selectedTrain ? <Badge>{trainStatusLabels[selectedTrain.status]}</Badge> : null}
                 </div>
                 <div className="space-y-2">
                   <CardTitle className="font-display text-3xl">
@@ -177,7 +180,7 @@ export default function DashboardPage() {
                   <CardDescription className="max-w-2xl text-sm">
                     {selectedTrain
                       ? `${selectedTrain.code}${selectedTrain.routeName ? ` | ${selectedTrain.routeName}` : ""}`
-                      : "Use the selector to choose the train for your monitoring workspace."}
+                      : "Use the selector to focus the dashboard on one train at a time."}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -224,8 +227,6 @@ export default function DashboardPage() {
   );
 }
 
-// ── Summary card ──────────────────────────────────────────────────
-
 const accentStyles: Record<string, string> = {
   emerald: "text-emerald-600 dark:text-emerald-400",
   amber: "text-amber-600 dark:text-amber-400",
@@ -242,7 +243,7 @@ function SummaryCard({
 }: {
   label: string;
   value: number | undefined;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   loading: boolean;
   accent?: string;
 }) {
@@ -250,13 +251,17 @@ function SummaryCard({
     <Card className="border-border/60 bg-card/90 shadow-panel">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-        <Icon className={`h-4 w-4 ${accent ? accentStyles[accent] ?? "text-muted-foreground" : "text-muted-foreground"}`} />
+        <Icon
+          className={`h-4 w-4 ${accent ? accentStyles[accent] ?? "text-muted-foreground" : "text-muted-foreground"}`}
+        />
       </CardHeader>
       <CardContent>
         {loading ? (
           <Skeleton className="h-8 w-12" />
         ) : (
-          <p className={`font-display text-3xl font-bold ${accent ? accentStyles[accent] ?? "text-foreground" : "text-foreground"}`}>
+          <p
+            className={`font-display text-3xl font-bold ${accent ? accentStyles[accent] ?? "text-foreground" : "text-foreground"}`}
+          >
             {value ?? 0}
           </p>
         )}

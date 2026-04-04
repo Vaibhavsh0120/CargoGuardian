@@ -1,75 +1,91 @@
 # Global TODO
 
-This file tracks all remaining work across the project. It is intentionally broader than any single phase file.
+This file tracks cross-phase remaining work and product constraints.
 
-## Data Mode Policy
+## Locked Demo Policy
 
-- When `NEXT_PUBLIC_DEMO_MODE=false` (default): the project will only and only use true and real data from Firebase, Blynk, TigerGraph, and all other integrations. No simulated, mocked, or placeholder data is ever shown.
-- When `NEXT_PUBLIC_DEMO_MODE=true`: all data is simulated for testing and verification purposes. The UI must never show any label, badge, banner, or indicator that data is simulated — it must look identical to real data. This mode exists solely for the developer to verify that everything is working correctly before real integrations are connected.
+- No fake trains in the UI
+- No fake dashboard counts
+- No separate demo data path
+- No demo badge or demo banner in the UI
+- `NEXT_PUBLIC_DEMO_MODE` only turns the simulator on or off
+
+## Locked Hardware Model
+
+Primary hardware signals:
+
+- `weightKg`
+- `gpsLat`
+- `gpsLng`
+- `rfidLastScan`
+- `rfidLastTag`
+- `clearanceLed`
+- `weightWarningState`
+
+Primary meanings:
+
+- `weightWarningState = -1` -> underweight / device blinks locally
+- `weightWarningState = 0` -> safe / light off
+- `weightWarningState = 1` -> overweight / device stays on locally
+
+Derived in CargoGuardian:
+
+- `speedKmh`
+- movement state
+- freshness / offline state
+- clearance state presentation
+- theft or cargo-loss suspicion from weight changes during transit
+
+## Locked Access Model
+
+- Admin sees all trains and shared global data.
+- Master sees trains they own or are assigned.
+- Worker sees assigned trains only before clearance.
+- Master can approve or reject worker requests for trains they manage.
+- Revoked assignments must not grant visibility.
+
+## Locked Train Model
+
+Train documents must carry at least:
+
+- `clearanceStatus`
+- `clearanceGrantedAt`
+- `clearanceGrantedBy`
+- `clearanceMethod`
+- `journeyStage`
+- `weightStatus`
+- `blynkAuthToken`
+- `blynkDeviceId`
 
 ## Remaining Core Work
 
-- Implement device inventory, device detail, pair device wizard, and assignment history.
-- Add Blynk device validation and telemetry ingestion routes.
-- Store realtime telemetry snapshots and historical telemetry records in Firestore.
-- Add SSE or polling fallback for live telemetry and alert updates.
-- Implement alert detection, alert lifecycle actions, and alert list/detail views.
-- Implement event history and audit log views.
-- Integrate Mapbox route and train location rendering.
-- Integrate TigerGraph analytics queries and cache outputs in Firestore.
-- Build dashboard aggregation and reduce query fan-out.
-- Add complete empty, error, stale, and offline states.
-- Write setup documentation for Firebase, Blynk, TigerGraph, and Vercel deployment.
+- Build current telemetry read APIs.
+- Derive speed from GPS history instead of treating it as a primary hardware field.
+- Build train-detail telemetry cards and dashboard telemetry overview.
+- Build freshness and offline handling.
+- Build clearance actions and history recording.
+- Build access request review UI for admins and masters.
+- Build alert rules for:
+  - overweight
+  - underweight
+  - offline hardware
+  - significant in-transit weight change
+- Build event history timeline.
+- Build map view with live train location and incident context.
+- Build analytics around cargo risk, route efficiency, and incident patterns.
+- Add train deletion flow that also deletes the Blynk device.
 
-## Authentication Follow-Ups
+## Documentation Work
 
-- Add profile hydration from Firestore so roles and preferences do not rely only on token claims/defaults.
-- Expand Firestore-backed user profiles so Settings can manage preferences, operator metadata, and notification options.
-- Add explicit admin tools for role management, account lifecycle controls, and read-only access assignment.
-- Add a Google redirect-based auth fallback if later mobile or popup-restricted environments need it.
-
-## Required Documentation Work
-
-- Add Firebase setup guide in `docs/`.
-- Add Firestore indexes and rules guide in `docs/`.
-- Add Blynk integration guide in `docs/`.
-- Add TigerGraph integration guide in `docs/`.
-- Add demo mode instructions in `docs/`.
-- Expand README with setup, local development, and deployment steps.
-
-## Optional Improvements
-
-- Add route-level breadcrumbs for nested detail pages.
-- Add server-side logging adapters instead of console-only logging.
-- Add optimistic mutation helpers for alert acknowledgement and resolution.
-- Add chart downsampling utilities for large historical telemetry windows.
-- Add background jobs or cron endpoints for analytics refresh.
-- Add a user profile avatar and operator preference editing in Settings.
-- Add device firmware update status and maintenance workflows.
-- Add train notes or incident comments.
-
-## Stretch Features
-
-- Multi-device-per-train support with primary/secondary device roles.
-- Geofence-based route deviation alerts.
-- Analytics trend comparisons across regions or routes.
-- PDF report export for alerts and analytics.
-- Ops command center wallboard mode.
-- Role-specific dashboards for viewer/operator/admin.
+- Keep Blynk setup docs aligned with the real payload model.
+- Add Firebase setup guide.
+- Add Firestore indexes/rules guide.
+- Add TigerGraph setup guide.
+- Add Vercel deployment guide.
 
 ## Technical Debt To Monitor
 
-- Current UI primitives are intentionally lightweight Phase 1 implementations and may need to be upgraded to fuller shadcn component behavior when the relevant interactions arrive.
-- Theme switching is local-only and not yet persisted.
-- Placeholder routes exist for shell completeness and should be replaced phase-by-phase rather than left in place.
-- `CreateTrainInput` in `types/train.ts` and `CreateTrainPayload` in `lib/validation/trains.ts` are maintained separately. Consider deriving one from the other to prevent future drift.
-- `routeName` is hardcoded to `null` when creating trains; should be resolved from the `routes` collection once that collection exists.
-- `accessRequests` collection created by the access request endpoint needs Firestore security rules and indexes.
-
-## Demo Preparation TODO
-
-- Add demo telemetry simulator script under `scripts/`.
-- Seed a small realistic train/device/alert dataset.
-- Prepare one “hero train” with active telemetry, one warning case, one critical case, and one offline case.
-- Add fallback analytics snapshots when TigerGraph is slow or unavailable.
-- Precompute dashboard summary snapshots for presentation stability.
+- `CreateTrainInput` and `CreateTrainPayload` are still maintained separately.
+- Telemetry payload compatibility currently tolerates legacy `errorLed` and `weightWarningLightColor` aliases; real hardware should use `weightWarningState`.
+- Access-control UI is not built yet even though the APIs exist.
+- Phase 6 should centralize telemetry derivation helpers rather than scattering logic.

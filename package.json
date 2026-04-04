@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n next,sim -c blue,green \"next dev\" \"tsx scripts/demo-device-simulator/index.ts\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "check:secrets": "powershell.exe -ExecutionPolicy Bypass -File scripts/check-secrets.ps1"
+    "check:secrets": "powershell.exe -ExecutionPolicy Bypass -File scripts/check-secrets.ps1",
+    "simulate:devices": "tsx scripts/demo-device-simulator/index.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.96.2",
@@ -34,11 +35,13 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.2",
     "postcss": "^8.5.8",
     "shadcn": "^4.1.2",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }
 }

@@ -9,7 +9,7 @@ import {
 } from "@/features/auth/services/user-profile-server";
 
 export async function GET() {
-  const user = await getCurrentSessionUser();
+  const user = await getCurrentSessionUser({ allowIncomplete: true });
 
   if (!user) {
     const response = NextResponse.json({ authenticated: false, user: null }, { status: 401 });
@@ -25,13 +25,17 @@ export async function POST(request: Request) {
     const body = sessionTokenSchema.parse(await request.json());
     const decodedToken = await verifyIdToken(body.idToken);
     const sessionCookie = await createSessionCookie(body.idToken);
+    const existingUser = await getCurrentSessionUser({ allowIncomplete: true });
     const user = await ensureUserProfile(decodedToken.uid).catch(() =>
       getAuthOnlyUserProfile(decodedToken.uid, {
-        defaultRole: normalizeRole(decodedToken.role),
+        defaultRole: existingUser?.uid === decodedToken.uid ? existingUser.role : normalizeRole(decodedToken.role),
         defaultReadOnly:
-          typeof decodedToken.readOnly === "boolean"
-            ? decodedToken.readOnly
-            : normalizeRole(decodedToken.role) === "worker"
+          existingUser?.uid === decodedToken.uid
+            ? existingUser.readOnly
+            : typeof decodedToken.readOnly === "boolean"
+              ? decodedToken.readOnly
+              : normalizeRole(decodedToken.role) !== "admin" &&
+                normalizeRole(decodedToken.role) !== "master"
       })
     );
     const response = NextResponse.json({

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/lib/constants/roles";
 
-export function AuthStatusControls() {
+export function AuthStatusControls({ compact }: Readonly<{ compact?: boolean }>) {
   const router = useRouter();
   const { user, logout, isLoggingOut } = useAuth();
 
@@ -28,6 +28,19 @@ export function AuthStatusControls() {
     .slice(0, 2)
     .map((segment) => segment[0]?.toUpperCase() ?? "")
     .join("");
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
+          {initials || "CG"}
+        </div>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleLogout} disabled={isLoggingOut} title="Sign out">
+          <LogOut className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-3">

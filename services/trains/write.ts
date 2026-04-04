@@ -26,6 +26,12 @@ export async function createTrain(input: CreateTrainPayload, ownerId: string): P
     code: input.code.toUpperCase(),
     label: input.label.trim(),
     status: "idle" as const,
+    clearanceStatus: "pending" as const,
+    clearanceGrantedAt: null,
+    clearanceGrantedBy: null,
+    clearanceMethod: null,
+    journeyStage: "inspection" as const,
+    weightStatus: "unknown" as const,
     cargoType: input.cargoType,
     carCount: input.carCount,
     maxSpeed: input.maxSpeed ?? null,
@@ -35,12 +41,20 @@ export async function createTrain(input: CreateTrainPayload, ownerId: string): P
     routeName: null,
     description: input.description ?? null,
     ownerId,
+    blynkProvisioningStatus: "provisioned" as const,
+    blynkProvisioningError: null,
+    blynkTemplateId: process.env.BLYNK_TEMPLATE_ID ?? null,
+    blynkTemplateName: process.env.BLYNK_TEMPLATE_NAME ?? null,
+    blynkAuthToken: input.blynkAuthToken.trim(),
+    blynkDeviceId: input.blynkDeviceId ?? null,
+    firmware: null,
+    lastSeen: null,
     createdAt: now,
     updatedAt: now
   };
 
   await ref.set(data);
-  logger.info(`Train created: ${docId} (${input.code})`);
+  logger.info(`Train created: ${docId} (${input.code}) linked to Blynk device ${input.blynkDeviceId ?? "manual-name-match"}`);
 
   const createdAt = new Date().toISOString();
 
@@ -48,6 +62,12 @@ export async function createTrain(input: CreateTrainPayload, ownerId: string): P
     id: docId,
     ...data,
     status: "idle",
+    clearanceStatus: "pending",
+    clearanceGrantedAt: null,
+    clearanceGrantedBy: null,
+    clearanceMethod: null,
+    journeyStage: "inspection",
+    weightStatus: "unknown",
     createdAt,
     updatedAt: createdAt
   };

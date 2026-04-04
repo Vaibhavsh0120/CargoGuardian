@@ -24,7 +24,6 @@ The result should be a stable, navigable application frame that later feature pa
   - Analytics
   - Alerts
   - History
-  - Devices
   - Settings
 - Mobile bottom navigation for:
   - Dashboard
@@ -111,7 +110,6 @@ These components should become the canonical shell pieces reused across later fe
 - `/analytics`
 - `/alerts`
 - `/history`
-- `/devices`
 - `/settings`
 
 ## Integration Points
@@ -158,7 +156,7 @@ Notable implementation details:
 - The protected shell now uses a production-oriented desktop sidebar, mobile bottom navigation, shared top header, and standardized page framing.
 - Route-aware navigation is centralized in `lib/constants/routes.ts`, which now drives both desktop and mobile navigation state.
 - Selected train state is handled by `TrainContextProvider`, fetched from `GET /api/trains`, and persisted in local storage so later train-scoped pages can inherit the same selection.
-- `GET /api/trains` currently returns a minimal selector dataset only. It reads from Firestore when available and falls back to isolated demo data when `NEXT_PUBLIC_DEMO_MODE=true`.
+- `GET /api/trains` currently returns a minimal selector dataset only. It reads from Firestore and does not branch into a separate demo data path.
 - `GET /api/system/status` was implemented to power shell status badges without exposing server secrets to the client.
 - Shared `LoadingPanel`, `EmptyState`, and `ErrorState` components were added and connected to the protected route group and core app pages.
 - Placeholder app routes remain in place, but they now render inside the real shell and use the shared page header and state conventions instead of Phase 1 card placeholders.

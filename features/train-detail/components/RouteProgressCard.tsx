@@ -9,6 +9,8 @@ type RouteProgressCardProps = {
 };
 
 export function RouteProgressCard({ train }: Readonly<RouteProgressCardProps>) {
+  const hasRouteData = Boolean(train.routeName || train.origin || train.destination);
+
   return (
     <Card>
       <CardHeader>
@@ -22,6 +24,10 @@ export function RouteProgressCard({ train }: Readonly<RouteProgressCardProps>) {
             <div>
               <p className="text-sm font-medium text-foreground">{train.routeName}</p>
             </div>
+          ) : !hasRouteData ? (
+            <p className="text-sm text-muted-foreground">
+              Route metadata has not been added yet. The train can still ingest telemetry.
+            </p>
           ) : null}
 
           <div className="flex items-center justify-between">

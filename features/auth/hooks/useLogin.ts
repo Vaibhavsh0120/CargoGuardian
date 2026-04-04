@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginWithEmailPassword } from "@/features/auth/services/auth-client";
 import { createLoginSession } from "@/features/auth/services/auth-server";
 import type { LoginFormInput } from "@/features/auth/types/auth";
+import { isRoleSelectionRequired } from "@/types/user";
 
 function normalizeAuthError(error: unknown) {
   if (!(error instanceof Error)) {
@@ -35,7 +36,7 @@ export function useLogin() {
     },
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-      if (data.user && !data.user.roleSelected) {
+      if (data.user && isRoleSelectionRequired(data.user.role)) {
         router.replace("/onboarding" as Parameters<typeof router.replace>[0]);
       } else {
         router.replace("/dashboard" as Parameters<typeof router.replace>[0]);

@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { signInWithGooglePopup } from "@/features/auth/services/auth-client";
 import { syncSession } from "@/features/auth/services/auth-server";
+import { isRoleSelectionRequired } from "@/types/user";
 
 function normalizeGoogleAuthError(error: unknown) {
   if (!(error instanceof Error)) {
@@ -42,7 +43,7 @@ export function useGoogleAuth() {
     },
     onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
-      if (data.user && !data.user.roleSelected) {
+      if (data.user && isRoleSelectionRequired(data.user.role)) {
         router.replace("/onboarding" as Parameters<typeof router.replace>[0]);
       } else {
         router.replace("/dashboard" as Parameters<typeof router.replace>[0]);

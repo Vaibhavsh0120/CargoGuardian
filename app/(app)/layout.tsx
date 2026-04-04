@@ -4,6 +4,7 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { TopStatusBar } from "@/components/layout/TopStatusBar";
 import { TrainContextProvider } from "@/components/layout/TrainContextProvider";
+import { DemoConsoleBridge } from "@/components/layout/DemoConsoleBridge";
 
 export default async function ProtectedAppLayout({
   children
@@ -12,8 +13,11 @@ export default async function ProtectedAppLayout({
 
   return (
     <TrainContextProvider>
-      <div className="dashboard-shell flex min-h-screen bg-background">
-        <AppSidebar />
+      <DemoConsoleBridge />
+      <div className="dashboard-shell flex h-screen overflow-hidden bg-background">
+        <div className="flex h-full flex-col overflow-y-auto">
+          <AppSidebar />
+        </div>
         <div className="flex min-h-screen flex-1 flex-col">
           <TopStatusBar />
           <PageContainer>{children}</PageContainer>

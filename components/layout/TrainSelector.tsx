@@ -17,7 +17,7 @@ const statusBadgeStyles = {
 } as const;
 
 export function TrainSelector({ className }: Readonly<{ className?: string }>) {
-  const { isLoading, isError, refresh, selectedTrain, selectedTrainId, setSelectedTrainId, source, trains } =
+  const { isLoading, isError, refresh, selectedTrain, selectedTrainId, setSelectedTrainId, trains } =
     useTrainContext();
 
   if (isLoading) {
@@ -60,11 +60,9 @@ export function TrainSelector({ className }: Readonly<{ className?: string }>) {
             Selected train
           </p>
           <p className="text-xs text-muted-foreground">
-            {source === "demo"
-              ? "Demo fleet is active for shell validation."
-              : trains.length
-                ? "Selection is persisted across refreshes."
-                : "Add train records to populate this workspace."}
+            {trains.length
+              ? "Selection is persisted across refreshes."
+              : "Add train records to populate this workspace."}
           </p>
         </div>
         {selectedTrain ? (

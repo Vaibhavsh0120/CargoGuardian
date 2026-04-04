@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { signupWithEmailPassword } from "@/features/auth/services/auth-client";
-import { createSignupSession } from "@/features/auth/services/auth-server";
+import { createAdminSignupSession } from "@/features/auth/services/auth-server";
 
 function normalizeAuthError(error: unknown) {
   if (!(error instanceof Error)) {
@@ -21,11 +21,16 @@ export function useAdminSignup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: { displayName: string; email: string; password: string }) => {
+    mutationFn: async (input: {
+      displayName: string;
+      email: string;
+      password: string;
+      inviteCode: string;
+    }) => {
       try {
         const credential = await signupWithEmailPassword(input);
         const idToken = await credential.user.getIdToken();
-        return createSignupSession(idToken, "admin");
+        return createAdminSignupSession(idToken, input.inviteCode);
       } catch (error) {
         throw new Error(normalizeAuthError(error));
       }

@@ -6,12 +6,15 @@ import { AdminInviteForm } from "@/features/auth/components/AdminInviteForm";
 import { getServerEnv } from "@/lib/env/server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { redirectAuthenticatedUser } from "@/lib/auth/guards";
 
 export default async function AdminInvitePage({
   searchParams
 }: {
   searchParams: Promise<{ code?: string }>;
 }) {
+  await redirectAuthenticatedUser();
+
   const { code } = await searchParams;
   const { ADMIN_INVITE_SECRET } = getServerEnv();
 
@@ -65,7 +68,7 @@ export default async function AdminInvitePage({
         title="Create Admin Account"
         description="Configure your primary administrative account."
       >
-        <AdminInviteForm />
+        <AdminInviteForm inviteCode={code} />
       </AuthCard>
     </div>
   );

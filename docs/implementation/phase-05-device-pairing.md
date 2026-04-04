@@ -1,156 +1,83 @@
 # Phase 5 - Device Pairing and Hardware Management
 
-## Phase Overview
+## Overview
 
-This phase introduces the hardware side of CargoGuardian. It turns the devices area from a placeholder into a real operational screen, adds the pair-device workflow, and establishes device assignment as a durable lifecycle record instead of a UI-only action.
+Phase 5 is complete.
 
-By the end of this phase, the app should manage ESP32 inventory, link a device to a train, prevent conflicting assignments, and store assignment history for later telemetry, alert, and audit workflows.
+The final Phase 5 workflow is the free-plan Blynk workflow:
 
-## Objectives
+- Train = Device
+- Blynk device is created manually in Blynk Console from the shared template
+- Add Train links that Blynk device to CargoGuardian
+- telemetry enters through `/api/telemetry/ingest`
+- the simulator uses the same ingest route
 
-- Implement device inventory screen.
-- Implement device detail screen.
-- Implement pair-device wizard.
-- Implement assignment and unassignment flows.
-- Persist device assignment lifecycle in Firestore.
-- Validate device codes against Blynk-facing metadata or a documented stub path.
+## Delivered
 
-## Required Features
+- manual Blynk device linking during train creation
+- Add Train collects:
+  - train metadata
+  - Blynk Auth Token
+  - optional Blynk device id
+- train document stores:
+  - `blynkProvisioningStatus`
+  - `blynkProvisioningError`
+  - `blynkTemplateId`
+  - `blynkTemplateName`
+  - `blynkAuthToken`
+  - `blynkDeviceId`
+  - `firmware`
+  - `lastSeen`
+- telemetry ingest foundation
+- local simulator that targets one dedicated demo train code
 
-- Device table with search and status filters
-- Device detail card
-- Pairing wizard with:
-  - train selection
-  - device code entry
-  - verification state
-  - assignment confirmation
-- Unassign flow
-- Assignment history view
-- Train detail device panel that reflects current assignment
+## Required Operator Workflow
 
-## Files To Create
+1. In Blynk Console, create a device from the `CargoGuardian ESP32` template.
+2. Set the Blynk device name exactly equal to the train code.
+3. Copy the device Auth Token.
+4. Open Add Train in CargoGuardian.
+5. Enter the train metadata and paste the Auth Token.
+6. Save the train.
+7. Flash the same Auth Token into the ESP32 firmware.
 
-- `app/(app)/devices/loading.tsx`
-- `app/(app)/devices/pair/page.tsx`
-- `app/(app)/devices/[deviceId]/page.tsx`
-- `features/devices/components/DeviceTable.tsx`
-- `features/devices/components/DeviceFilters.tsx`
-- `features/devices/components/DeviceDetailCard.tsx`
-- `features/devices/components/DeviceAssignmentHistory.tsx`
-- `features/devices/components/PairingWizard.tsx`
-- `features/devices/components/PairingStepTrain.tsx`
-- `features/devices/components/PairingStepCode.tsx`
-- `features/devices/components/PairingStepVerify.tsx`
-- `features/devices/components/PairingStepComplete.tsx`
-- `features/devices/hooks/useDevices.ts`
-- `features/devices/hooks/useDevice.ts`
-- `features/devices/hooks/usePairDevice.ts`
-- `features/devices/hooks/useUnassignDevice.ts`
-- `features/devices/services/device-client.ts`
-- `services/devices/read.ts`
-- `services/devices/write.ts`
-- `services/devices/assignments.ts`
-- `services/blynk/pairing.ts`
-- `lib/validation/devices.ts`
-- `types/device.ts`
-- `types/device-assignment.ts`
+## Hardware Semantics Locked By This Phase
 
-## Files To Update
+Primary operational signals:
 
-- `app/(app)/devices/page.tsx`
-- `app/(app)/fleet/[trainId]/page.tsx`
-- `types/train.ts`
-- `README.md` if setup notes change
+- weight
+- GPS
+- RFID
+- clearance LED
+- weight warning state (`-1 underweight`, `0 safe`, `1 overweight`)
 
-## Components To Build
+Compatibility note:
 
-- `DeviceTable`
-- `DeviceFilters`
-- `DeviceDetailCard`
-- `DeviceAssignmentHistory`
-- `PairingWizard`
-- `DeviceStatusBadge`
-- `AssignmentStateBadge`
-- train-detail `DeviceAssignmentPanel`
-
-## APIs To Implement
-
-- `GET /api/devices`
-- `GET /api/devices/[deviceId]`
-- `POST /api/devices/pair`
-- `POST /api/devices/[deviceId]/assign`
-- `POST /api/devices/[deviceId]/unassign`
-
-Notes:
-- keep assignment writes on the server
-- use transactional updates for device + train + assignment record consistency
-
-## Services To Implement
-
-- Device read service
-- Device write service
-- Assignment transaction service
-- Blynk device-code validation service
-- Audit logging helper for assignment mutations
+- telemetry ingest still accepts legacy `errorLed` and color aliases for compatibility
+- real hardware and simulator payloads should use `weightWarningState`
 
 ## Data Flow
 
-1. Devices page loads `GET /api/devices`.
-2. Pairing wizard collects train and device code.
-3. Frontend posts to `/api/devices/pair`.
-4. API route validates payload and checks auth/role.
-5. Assignment service verifies device state and device-code ownership.
-6. Transaction updates:
-   - `devices/{deviceId}`
-   - `trains/{trainId}`
-   - `deviceAssignments/{assignmentId}`
-   - `events`
-   - `auditLogs`
-7. UI invalidates devices, fleet, train detail, and selector caches.
+1. Admin links the manually created Blynk device during Add Train.
+2. The template webhook posts telemetry to CargoGuardian.
+3. The webhook sends `deviceId`, which is the Blynk device name.
+4. CargoGuardian resolves the train by `train.code`.
+5. CargoGuardian writes `telemetry_current` and `telemetry_history`.
 
-## UI Pages Affected
+## Post-Phase Correction Notes
 
-- `/devices`
-- `/devices/pair`
-- `/devices/[deviceId]`
-- `/fleet/[trainId]`
+Earlier AI-generated work assumed server-side auto-creation of Blynk devices using a generic account token. That path was removed because it does not match the free-plan workflow the project can actually rely on.
 
-## Integration Points
+Future phases must assume:
 
-- Firestore `devices`
-- Firestore `deviceAssignments`
-- Firestore `trains`
-- Blynk device registry or validation endpoint
-- Firestore `auditLogs`
-- Firestore `events`
+- Blynk device creation is manual
+- Add Train links the device, it does not create it
+- the Blynk device name must equal the train code
+- the template webhook is the connection point between Blynk and CargoGuardian
+- demo mode should target exactly one demo train whose code or label contains `DEMO`
 
-## Dependencies
+## Deferred
 
-- Depends on Phase 4 because devices must attach to real trains.
-- Must complete before Phase 6 because telemetry requires an active device-to-train relationship.
-
-## Validation Checklist
-
-- Devices page lists inventory correctly.
-- Pairing fails for invalid codes.
-- Pairing fails for already-active conflicting assignments.
-- Pairing succeeds for a valid unassigned device.
-- Device detail reflects new assignment state.
-- Train detail reflects active device state.
-- Unassign flow updates both train and device state.
-- Assignment history is preserved and queryable.
-- `npm run lint`, `npm run typecheck`, and `npm run build` pass.
-
-## Deliverables
-
-- Real devices page
-- Pairing wizard
-- Assignment transaction service
-- Device detail route
-- Assignment history persistence
-
-## Hackathon Priority
-
-**Critical for demo**
-
-Pairing a device is one of the required showcase workflows and must be functional for the demo storyline.
+- Current telemetry read APIs and UI belong to Phase 6.
+- Clearance actions and incident alerts belong to Phase 7.
+- Train deletion still needs to include Blynk cleanup guidance.

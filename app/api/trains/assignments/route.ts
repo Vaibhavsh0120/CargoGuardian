@@ -22,18 +22,20 @@ export async function GET() {
     const db = getFirebaseAdminDb();
     const snapshot = await db.collection("trainAssignments").where("userId", "==", user.uid).get();
 
-    const assignments: TrainAssignment[] = snapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        trainId: data.trainId as string,
-        userId: data.userId as string,
-        role: data.role as TrainAssignment["role"],
-        grantedBy: data.grantedBy as string,
-        grantedAt: normalizeTimestamp(data.grantedAt) ?? new Date().toISOString(),
-        expiresAt: normalizeTimestamp(data.expiresAt)
-      };
-    });
+    const assignments: TrainAssignment[] = snapshot.docs
+      .filter((doc) => !doc.data().revokedAt)
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          trainId: data.trainId as string,
+          userId: data.userId as string,
+          role: data.role as TrainAssignment["role"],
+          grantedBy: data.grantedBy as string,
+          grantedAt: normalizeTimestamp(data.grantedAt) ?? new Date().toISOString(),
+          expiresAt: normalizeTimestamp(data.expiresAt)
+        };
+      });
 
     return ok({ assignments });
   } catch (error) {

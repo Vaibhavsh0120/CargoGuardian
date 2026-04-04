@@ -42,8 +42,8 @@ export async function POST(request: Request) {
     return failure("Authentication required.", 401);
   }
 
-  if (user.readOnly) {
-    return failure("You do not have permission to create trains.", 403);
+  if (user.role !== "admin") {
+    return failure("Only administrators can create trains.", 403);
   }
 
   let body: unknown;

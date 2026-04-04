@@ -1,6 +1,28 @@
-import type { AuthSessionResponse, SessionCookiePayload } from "@/features/auth/types/auth";
+import type {
+  AdminSignupSessionPayload,
+  AuthSessionResponse,
+  SessionCookiePayload
+} from "@/features/auth/types/auth";
 
 async function postAuthCookie(endpoint: string, payload: SessionCookiePayload) {
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    credentials: "include",
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const error = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(error?.error ?? "Authentication request failed.");
+  }
+
+  return (await response.json()) as AuthSessionResponse;
+}
+
+async function postAdminAuthCookie(endpoint: string, payload: AdminSignupSessionPayload) {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -22,8 +44,12 @@ export async function createLoginSession(idToken: string) {
   return postAuthCookie("/api/auth/login", { idToken });
 }
 
-export async function createSignupSession(idToken: string, role?: "admin") {
-  return postAuthCookie("/api/auth/signup", { idToken, ...(role && { role }) });
+export async function createSignupSession(idToken: string) {
+  return postAuthCookie("/api/auth/signup", { idToken });
+}
+
+export async function createAdminSignupSession(idToken: string, inviteCode: string) {
+  return postAdminAuthCookie("/api/auth/admin-signup", { idToken, inviteCode });
 }
 
 export async function syncSession(idToken: string) {

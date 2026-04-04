@@ -1,8 +1,11 @@
 import { AuthCard } from "@/features/auth/components/AuthCard";
 import { AuthForm } from "@/features/auth/components/AuthForm";
 import { AuthGuardNotice } from "@/features/auth/components/AuthGuardNotice";
+import { redirectAuthenticatedUser } from "@/lib/auth/guards";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  await redirectAuthenticatedUser();
+
   return (
     <div className="w-full max-w-md space-y-4">
       <AuthGuardNotice

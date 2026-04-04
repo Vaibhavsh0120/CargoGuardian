@@ -10,7 +10,7 @@ import { GoogleMark } from "@/features/auth/components/GoogleMark";
 import { useAdminSignup } from "@/features/auth/hooks/useAdminSignup";
 import { useGoogleAdminSignup } from "@/features/auth/hooks/useGoogleAdminSignup";
 
-export function AdminInviteForm() {
+export function AdminInviteForm({ inviteCode }: Readonly<{ inviteCode: string }>) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -36,7 +36,8 @@ export function AdminInviteForm() {
       await adminSignupMutation.mutateAsync({
         displayName,
         email,
-        password
+        password,
+        inviteCode
       });
 
       startTransition(() => {
@@ -52,7 +53,7 @@ export function AdminInviteForm() {
     setErrorMessage(null);
 
     try {
-      await googleAdminSignupMutation.mutateAsync();
+      await googleAdminSignupMutation.mutateAsync(inviteCode);
       startTransition(() => {
         router.replace("/dashboard" as Parameters<typeof router.replace>[0]);
         router.refresh();

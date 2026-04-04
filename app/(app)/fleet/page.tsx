@@ -12,9 +12,11 @@ import { Badge } from "@/components/ui/badge";
 import { FleetEmptyState } from "@/features/fleet/components/FleetEmptyState";
 import { FleetFilters } from "@/features/fleet/components/FleetFilters";
 import { FleetTable } from "@/features/fleet/components/FleetTable";
+import { useSession } from "@/features/auth/hooks/useSession";
 import { useFleet } from "@/features/fleet/hooks/useFleet";
 
 export default function FleetPage() {
+  const sessionQuery = useSession();
   const {
     trains,
     isLoading,
@@ -44,6 +46,7 @@ export default function FleetPage() {
   }
 
   const hasFilters = Boolean(statusFilter ?? search);
+  const canCreateTrain = sessionQuery.data?.user?.role === "admin";
 
   return (
     <div className="space-y-6">
@@ -51,12 +54,12 @@ export default function FleetPage() {
         eyebrow="Fleet"
         title="Fleet overview"
         description={`${trains.length} train${trains.length !== 1 ? "s" : ""} in your fleet.`}
-        actions={
+        actions={canCreateTrain ? (
           <Link href={"/trains/new" as Route} className={buttonVariants()}>
             <Plus className="mr-1.5 h-4 w-4" />
             Add train
           </Link>
-        }
+        ) : undefined}
       />
 
       {/* Freshness indicator */}
@@ -76,7 +79,7 @@ export default function FleetPage() {
       />
 
       {trains.length === 0 ? (
-        <FleetEmptyState hasFilters={hasFilters} />
+        <FleetEmptyState hasFilters={hasFilters} canCreateTrain={canCreateTrain} />
       ) : (
         <FleetTable trains={trains} />
       )}

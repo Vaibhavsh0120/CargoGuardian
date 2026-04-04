@@ -172,7 +172,9 @@ Notable implementation details:
 - Session validation is performed through `firebase-admin` in `lib/auth/session.ts`.
 - Middleware and server-side guards now rely on the Firebase Admin session-cookie flow instead of a temporary token bridge.
 - Firestore user profile creation now happens server-side through `features/auth/services/user-profile-server.ts`.
-- The signup flow creates or merges `users/{uid}` profile documents and sets initial role and read-only claims.
+- Normal email/password and Google signup create `users/{uid}` profile documents with initial role `not-set`, which forces `/onboarding` before the protected app can be accessed.
+- The admin invite flow is isolated behind its own `/api/auth/admin-signup` route, re-validates the invite code on POST, creates the user directly as `admin`, and takes that user straight into the dashboard.
+- Role selection is now represented by the actual `role` value instead of a separate `roleSelected` flag for new profile writes.
 - Session refresh and authenticated layout flows also ensure a user profile exists, which keeps the repo aligned with the later Firestore-based authorization plan.
 - The Firebase service-account credentials are expected in environment variables and are loaded through `services/firebase/admin.ts`.
 - Local repository protections were added so `.env`, service-account JSON files, and common key files are ignored by Git and checked by a pre-commit secret scan.

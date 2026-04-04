@@ -12,6 +12,10 @@ export const signupSchema = z.object({
 });
 
 export const sessionTokenSchema = z.object({
+  idToken: z.string().min(1)
+});
+
+export const adminSessionTokenSchema = z.object({
   idToken: z.string().min(1),
-  role: z.enum(["worker", "master", "admin"]).optional()
+  inviteCode: z.string().min(1)
 });

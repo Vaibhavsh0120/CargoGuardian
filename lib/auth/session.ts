@@ -7,8 +7,10 @@ import {
   ensureUserProfile,
   getAuthOnlyUserProfile,
   getUserProfile,
-  normalizeRole
+  normalizeRole,
+  requiresRoleSelection
 } from "@/features/auth/services/user-profile-server";
+import type { AppUser } from "@/types/user";
 
 const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 5;
 
@@ -58,7 +60,13 @@ export async function verifySessionCookieValue(sessionCookie: string) {
   return auth.verifySessionCookie(sessionCookie, true);
 }
 
-export async function getCurrentSessionUser() {
+type GetCurrentSessionUserOptions = {
+  allowIncomplete?: boolean;
+};
+
+export async function getCurrentSessionUser(
+  options: GetCurrentSessionUserOptions = {}
+): Promise<AppUser | null> {
   const sessionCookie = await getSessionToken();
 
   if (!sessionCookie) {
@@ -68,17 +76,29 @@ export async function getCurrentSessionUser() {
   try {
     const decodedToken = await verifySessionCookieValue(sessionCookie);
     try {
-      return (await getUserProfile(decodedToken.uid)) ?? (await ensureUserProfile(decodedToken.uid));
+      const user =
+        (await getUserProfile(decodedToken.uid)) ?? (await ensureUserProfile(decodedToken.uid));
+      return shouldReturnUser(user, options.allowIncomplete);
     } catch {
-      return getAuthOnlyUserProfile(decodedToken.uid, {
+      const user = await getAuthOnlyUserProfile(decodedToken.uid, {
         defaultRole: normalizeRole(decodedToken.role),
         defaultReadOnly:
           typeof decodedToken.readOnly === "boolean"
             ? decodedToken.readOnly
-            : normalizeRole(decodedToken.role) === "worker"
+            : normalizeRole(decodedToken.role) !== "admin" &&
+              normalizeRole(decodedToken.role) !== "master"
       });
+      return shouldReturnUser(user, options.allowIncomplete);
     }
   } catch {
     return null;
   }
+}
+
+function shouldReturnUser(user: AppUser, allowIncomplete = false) {
+  if (!allowIncomplete && requiresRoleSelection(user)) {
+    return null;
+  }
+
+  return user;
 }

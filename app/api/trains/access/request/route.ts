@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ok, failure } from "@/lib/api/response";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
+import { userHasActiveTrainAssignment } from "@/services/trains/access";
 import { FieldValue } from "firebase-admin/firestore";
 
 const requestAccessSchema = z.object({
@@ -30,14 +31,7 @@ export async function POST(request: Request) {
       return failure("Train data unavailable.", 500);
     }
 
-    const existingSnapshot = await db
-      .collection("trainAssignments")
-      .where("trainId", "==", body.trainId)
-      .where("userId", "==", user.uid)
-      .limit(1)
-      .get();
-
-    if (!existingSnapshot.empty) {
+    if (await userHasActiveTrainAssignment(db, body.trainId, user.uid)) {
       return failure("You already have access to this train.", 409);
     }
 
@@ -55,6 +49,7 @@ export async function POST(request: Request) {
 
     await db.collection("accessRequests").add({
       trainId: body.trainId,
+      trainCode: trainData.code ?? body.trainId,
       userId: user.uid,
       userEmail: user.email,
       userName: user.displayName,

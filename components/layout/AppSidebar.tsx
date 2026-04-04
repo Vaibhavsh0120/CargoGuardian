@@ -8,7 +8,6 @@ import {
   Gauge,
   History,
   Map,
-  MemoryStick,
   Settings,
   TrainFront
 } from "lucide-react";
@@ -23,7 +22,6 @@ const icons = {
   analytics: ChartColumnIncreasing,
   alerts: Bell,
   history: History,
-  devices: MemoryStick,
   settings: Settings
 };
 

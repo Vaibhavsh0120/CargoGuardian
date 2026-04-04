@@ -29,16 +29,17 @@ $blockedContentPatterns = @(
   '-----BEGIN PRIVATE KEY-----',
   '"private_key"\s*:\s*"-----BEGIN PRIVATE KEY-----',
   'FIREBASE_PRIVATE_KEY\s*=\s*-----BEGIN PRIVATE KEY-----',
-  'BLYNK_AUTH_TOKEN\s*=\s*(?!\s*$)',
-  'TIGERGRAPH_API_KEY\s*=\s*(?!\s*$)',
-  'MAPBOX_SECRET_TOKEN\s*=\s*(?!\s*$)',
-  'SESSION_COOKIE_SECRET\s*=\s*(?!\s*$)'
+  'BLYNK_AUTH_TOKEN\s*=\s*[^\s\r\n]',
+  'TIGERGRAPH_API_KEY\s*=\s*[^\s\r\n]',
+  'MAPBOX_SECRET_TOKEN\s*=\s*[^\s\r\n]',
+  'SESSION_COOKIE_SECRET\s*=\s*[^\s\r\n]'
 )
 
 $allowedFilesForContentCheck = @(
   '.env.example',
   'scripts/check-secrets.ps1',
-  '.githooks/pre-commit'
+  '.githooks/pre-commit',
+  'docs/device-connection.md'
 )
 
 $violations = New-Object System.Collections.Generic.List[string]

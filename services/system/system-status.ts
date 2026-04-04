@@ -47,7 +47,7 @@ export function getSystemStatusSummary(): SystemStatusSummary {
       key: "mode",
       label: "Mode",
       level: demoMode ? "demo" : "healthy",
-      detail: demoMode ? "Demo fallback active" : "Live integration path"
+      detail: demoMode ? "Demo simulator enabled" : "Live integration path"
     }
   ];
 

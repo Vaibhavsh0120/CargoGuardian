@@ -1,59 +1,80 @@
 "use client";
 
-import { Activity, Bell, MemoryStick, RouteIcon, Gauge, Timer } from "lucide-react";
+import { Activity, Gauge, MemoryStick, RouteIcon, ShieldCheck, Timer } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Train } from "@/types/train";
+import {
+  blynkProvisioningStatusLabels,
+  clearanceStatusLabels,
+  weightStatusLabels,
+  type Train
+} from "@/types/train";
 
 type TrainOverviewGridProps = {
   train: Train;
 };
 
-const gridItems = [
-  {
-    key: "telemetry",
-    label: "Live telemetry",
-    description: "Real-time sensor readings will appear once a device is paired.",
-    icon: Activity,
-    value: "Pending"
-  },
-  {
-    key: "alerts",
-    label: "Active alerts",
-    description: "Alert monitoring will be available after telemetry is connected.",
-    icon: Bell,
-    value: "0"
-  },
-  {
-    key: "devices",
-    label: "Paired devices",
-    description: "Hardware pairing is available after device inventory is set up.",
-    icon: MemoryStick,
-    value: "0"
-  },
-  {
-    key: "route",
-    label: "Route progress",
-    description: "Route tracking will activate once waypoints and GPS data are connected.",
-    icon: RouteIcon,
-    value: "—"
-  }
-];
-
 export function TrainOverviewGrid({ train }: TrainOverviewGridProps) {
-  const dynamicItems = [
-    ...gridItems,
+  const routeValue = train.routeName || [train.origin, train.destination].filter(Boolean).join(" -> ") || "Not set";
+
+  const items = [
     {
-      key: "speed",
-      label: "Max speed",
-      description: "Maximum rated speed for this train configuration.",
+      key: "telemetry",
+      label: "Telemetry feed",
+      description: train.lastSeen
+        ? `Latest telemetry arrived ${formatRelativeTime(train.lastSeen)}.`
+        : "Waiting for the first webhook update from Blynk or the demo simulator.",
+      icon: Activity,
+      value: train.lastSeen ? "Live" : "Pending"
+    },
+    {
+      key: "clearance",
+      label: "Clearance",
+      description: train.clearanceGrantedAt
+        ? `Granted ${formatRelativeTime(train.clearanceGrantedAt)}${train.clearanceMethod ? ` by ${train.clearanceMethod}` : ""}.`
+        : "This train is still in pre-departure handling.",
+      icon: ShieldCheck,
+      value: clearanceStatusLabels[train.clearanceStatus]
+    },
+    {
+      key: "weight",
+      label: "Weight state",
+      description:
+        train.weightStatus === "underweight"
+          ? "Efficiency warning. Hardware should blink the shared warning light."
+          : train.weightStatus === "overweight"
+            ? "Safety warning. Hardware should keep the shared warning light solid."
+            : train.weightStatus === "safe"
+              ? "Train weight is inside the safe operating band."
+              : "No verified weight reading yet.",
       icon: Gauge,
-      value: train.maxSpeed ? `${train.maxSpeed} km/h` : "N/A"
+      value: weightStatusLabels[train.weightStatus]
+    },
+    {
+      key: "device",
+      label: "Blynk link",
+      description: train.blynkDeviceId
+        ? `Linked to Blynk device ${train.blynkDeviceId}.`
+        : train.blynkAuthToken
+          ? "Linked by Auth Token. Save the Blynk device id later if you need it."
+          : train.blynkProvisioningError ?? "No Blynk link is stored for this train.",
+      icon: MemoryStick,
+      value: blynkProvisioningStatusLabels[train.blynkProvisioningStatus]
+    },
+    {
+      key: "route",
+      label: "Route setup",
+      description:
+        train.origin || train.destination || train.routeName
+          ? "Basic route metadata is available for this train."
+          : "Route tracking will improve once GPS telemetry and route metadata are connected.",
+      icon: RouteIcon,
+      value: routeValue
     },
     {
       key: "updated",
       label: "Last updated",
-      description: "Most recent data change timestamp.",
+      description: "Most recent train record change in CargoGuardian.",
       icon: Timer,
       value: formatRelativeTime(train.updatedAt)
     }
@@ -61,16 +82,18 @@ export function TrainOverviewGrid({ train }: TrainOverviewGridProps) {
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {dynamicItems.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         return (
           <Card key={item.key} className="border-border/60 bg-card/90 shadow-panel">
             <CardHeader className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                   <Icon className="h-4.5 w-4.5" />
                 </span>
-                <span className="font-display text-2xl font-bold text-foreground">{item.value}</span>
+                <span className="max-w-[60%] text-right font-display text-xl font-bold text-foreground">
+                  {item.value}
+                </span>
               </div>
               <div className="space-y-1">
                 <CardTitle className="font-display text-base font-bold">{item.label}</CardTitle>

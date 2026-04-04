@@ -1,8 +1,14 @@
 import "server-only";
 
-import { getClientEnv } from "@/lib/env/client";
 import { logger } from "@/lib/logger";
 import type { TrainListQuery } from "@/lib/validation/trains";
+import {
+  canWorkerViewTrain,
+  listActiveAssignedTrainIds,
+  normalizeClearanceStatus,
+  normalizeJourneyStage,
+  normalizeWeightStatus
+} from "@/services/trains/access";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
 import type { AppUser } from "@/types/user";
 import type {
@@ -14,96 +20,6 @@ import type {
   TrainSelectorItem,
   TrainSelectorResponse
 } from "@/types/train";
-
-// ── Demo data ────────────────────────────────────────────────────────
-
-const DEMO_TRAINS: Train[] = [
-  {
-    id: "demo-atlantic-freight-12",
-    code: "CG-1208",
-    label: "Atlantic Freight 12",
-    status: "active",
-    cargoType: "container",
-    carCount: 42,
-    maxSpeed: 120,
-    origin: "Savannah",
-    destination: "Memphis",
-    routeId: null,
-    routeName: "Savannah to Memphis",
-    description: "Primary east-west container corridor service.",
-    ownerId: "demo",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "demo-cascade-mineral-4",
-    code: "CG-2084",
-    label: "Cascade Mineral 4",
-    status: "warning",
-    cargoType: "bulk",
-    carCount: 28,
-    maxSpeed: 90,
-    origin: "Tacoma",
-    destination: "Spokane",
-    routeId: null,
-    routeName: "Tacoma to Spokane",
-    description: "Bulk mineral freight via Cascade range.",
-    ownerId: "demo",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "demo-plains-corridor-9",
-    code: "CG-3301",
-    label: "Plains Corridor 9",
-    status: "offline",
-    cargoType: "general",
-    carCount: 18,
-    maxSpeed: 110,
-    origin: "Omaha",
-    destination: "Cheyenne",
-    routeId: null,
-    routeName: "Omaha to Cheyenne",
-    description: "General freight across the Great Plains.",
-    ownerId: "demo",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "demo-gulf-hazmat-7",
-    code: "CG-4417",
-    label: "Gulf Hazmat 7",
-    status: "critical",
-    cargoType: "hazardous",
-    carCount: 12,
-    maxSpeed: 65,
-    origin: "Houston",
-    destination: "New Orleans",
-    routeId: null,
-    routeName: "Houston to New Orleans",
-    description: "Hazardous materials transport along Gulf coast.",
-    ownerId: "demo",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: "demo-mountain-cold-2",
-    code: "CG-5502",
-    label: "Mountain Cold 2",
-    status: "idle",
-    cargoType: "refrigerated",
-    carCount: 22,
-    maxSpeed: 100,
-    origin: "Denver",
-    destination: "Salt Lake City",
-    routeId: null,
-    routeName: "Denver to Salt Lake City",
-    description: "Refrigerated goods via Rocky Mountain corridor.",
-    ownerId: "demo",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
 
 // ── Raw Firestore record ─────────────────────────────────────────────
 
@@ -120,13 +36,17 @@ function getNumber(value: unknown): number | null {
   return null;
 }
 
-function getIsoString(value: unknown): string {
+function getOptionalIsoString(value: unknown): string | null {
   if (typeof value === "string") return value;
   if (value instanceof Date) return value.toISOString();
   if (typeof value === "object" && value !== null && "toDate" in value) {
     return (value as { toDate: () => Date }).toDate().toISOString();
   }
-  return new Date().toISOString();
+  return null;
+}
+
+function getRequiredIsoString(value: unknown): string {
+  return getOptionalIsoString(value) ?? new Date().toISOString();
 }
 
 function normalizeTrainStatus(value: unknown): TrainStatus {
@@ -154,12 +74,22 @@ function normalizeCargoType(value: unknown): CargoType {
 function mapTrain(id: string, raw: RawTrainRecord): Train {
   const code = getString(raw.code) ?? getString(raw.trainCode) ?? id.toUpperCase();
   const label = getString(raw.label) ?? getString(raw.displayLabel) ?? getString(raw.name) ?? code;
+  const blynkAuthToken = getString(raw.blynkAuthToken);
+  const blynkDeviceId = getString(raw.blynkDeviceId);
+  const inferredBlynkProvisioningStatus =
+    raw.blynkProvisioningStatus === "failed" || !blynkAuthToken ? "failed" : "provisioned";
 
   return {
     id,
     code,
     label,
     status: normalizeTrainStatus(raw.status),
+    clearanceStatus: normalizeClearanceStatus(raw.clearanceStatus),
+    clearanceGrantedAt: getOptionalIsoString(raw.clearanceGrantedAt),
+    clearanceGrantedBy: getString(raw.clearanceGrantedBy),
+    clearanceMethod: raw.clearanceMethod === "remote" || raw.clearanceMethod === "rfid" ? raw.clearanceMethod : null,
+    journeyStage: normalizeJourneyStage(raw.journeyStage),
+    weightStatus: normalizeWeightStatus(raw.weightStatus),
     cargoType: normalizeCargoType(raw.cargoType),
     carCount: getNumber(raw.carCount) ?? 0,
     maxSpeed: getNumber(raw.maxSpeed),
@@ -169,8 +99,16 @@ function mapTrain(id: string, raw: RawTrainRecord): Train {
     routeName: getString(raw.routeName) ?? getString((raw.route as Record<string, unknown> | undefined)?.name),
     description: getString(raw.description),
     ownerId: getString(raw.ownerId) ?? "unknown",
-    createdAt: getIsoString(raw.createdAt),
-    updatedAt: getIsoString(raw.updatedAt ?? raw.lastUpdatedAt)
+    blynkProvisioningStatus: inferredBlynkProvisioningStatus,
+    blynkProvisioningError: getString(raw.blynkProvisioningError),
+    blynkTemplateId: getString(raw.blynkTemplateId),
+    blynkTemplateName: getString(raw.blynkTemplateName),
+    blynkAuthToken,
+    blynkDeviceId,
+    firmware: getString(raw.firmware),
+    lastSeen: getOptionalIsoString(raw.lastSeen),
+    createdAt: getRequiredIsoString(raw.createdAt),
+    updatedAt: getRequiredIsoString(raw.updatedAt ?? raw.lastUpdatedAt)
   };
 }
 
@@ -180,11 +118,15 @@ function trainToListItem(train: Train): TrainListItem {
     code: train.code,
     label: train.label,
     status: train.status,
+    clearanceStatus: train.clearanceStatus,
+    journeyStage: train.journeyStage,
+    weightStatus: train.weightStatus,
     cargoType: train.cargoType,
     carCount: train.carCount,
     origin: train.origin,
     destination: train.destination,
     routeName: train.routeName,
+    lastSeen: train.lastSeen,
     updatedAt: train.updatedAt
   };
 }
@@ -200,19 +142,21 @@ function trainToSelectorItem(train: Train): TrainSelectorItem {
   };
 }
 
-// ── isDemoMode ───────────────────────────────────────────────────────
-
-function isDemoMode(): boolean {
-  return getClientEnv().NEXT_PUBLIC_DEMO_MODE === "true";
+function applySearchFilter(items: TrainListItem[], search: string): TrainListItem[] {
+  const q = search.toLowerCase();
+  return items.filter(
+    (t) =>
+      t.label.toLowerCase().includes(q) ||
+      t.code.toLowerCase().includes(q) ||
+      (t.origin?.toLowerCase().includes(q) ?? false) ||
+      (t.destination?.toLowerCase().includes(q) ?? false) ||
+      (t.routeName?.toLowerCase().includes(q) ?? false)
+  );
 }
 
 // ── List trains ──────────────────────────────────────────────────────
 
 export async function listTrains(query: TrainListQuery, user?: AppUser): Promise<TrainListItem[]> {
-  if (isDemoMode()) {
-    return applyClientFilters(DEMO_TRAINS.map(trainToListItem), query);
-  }
-
   if (!process.env.FIREBASE_PROJECT_ID) {
     return [];
   }
@@ -223,8 +167,7 @@ export async function listTrains(query: TrainListQuery, user?: AppUser): Promise
     // 1. Resolve permitted train IDs if it's a restricted user.
     let allowedTrainIds: string[] | null = null; // null means 'allow all' (admin)
     if (user && user.role !== "admin") {
-      const perms = await db.collection("trainAssignments").where("userId", "==", user.uid).get();
-      allowedTrainIds = perms.docs.map(doc => doc.data().trainId as string);
+      allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
     }
 
     let ref = db.collection("trains").orderBy(query.sortBy ?? "label", query.sortDir ?? "asc");
@@ -240,6 +183,9 @@ export async function listTrains(query: TrainListQuery, user?: AppUser): Promise
     let trains = snapshot.docs.map((doc) => mapTrain(doc.id, doc.data()));
     if (user && allowedTrainIds !== null) {
       trains = trains.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
+      if (user.role === "worker") {
+        trains = trains.filter((train) => canWorkerViewTrain(train as unknown as RawTrainRecord));
+      }
     }
 
     const items = trains.map(trainToListItem);
@@ -255,48 +201,9 @@ export async function listTrains(query: TrainListQuery, user?: AppUser): Promise
   }
 }
 
-function applyClientFilters(items: TrainListItem[], query: TrainListQuery): TrainListItem[] {
-  let result = items;
-
-  if (query.status) {
-    result = result.filter((t) => t.status === query.status);
-  }
-
-  if (query.search) {
-    result = applySearchFilter(result, query.search);
-  }
-
-  const sortBy = query.sortBy ?? "label";
-  const sortDir = query.sortDir === "desc" ? -1 : 1;
-
-  result.sort((a, b) => {
-    const aVal = a[sortBy as keyof TrainListItem] ?? "";
-    const bVal = b[sortBy as keyof TrainListItem] ?? "";
-    return String(aVal).localeCompare(String(bVal)) * sortDir;
-  });
-
-  return result.slice(0, query.limit ?? 50);
-}
-
-function applySearchFilter(items: TrainListItem[], search: string): TrainListItem[] {
-  const q = search.toLowerCase();
-  return items.filter(
-    (t) =>
-      t.label.toLowerCase().includes(q) ||
-      t.code.toLowerCase().includes(q) ||
-      (t.origin?.toLowerCase().includes(q) ?? false) ||
-      (t.destination?.toLowerCase().includes(q) ?? false) ||
-      (t.routeName?.toLowerCase().includes(q) ?? false)
-  );
-}
-
 // ── Get single train ─────────────────────────────────────────────────
 
 export async function getTrain(trainId: string, user?: AppUser): Promise<Train | null> {
-  if (isDemoMode()) {
-    return DEMO_TRAINS.find((t) => t.id === trainId) ?? null;
-  }
-
   if (!process.env.FIREBASE_PROJECT_ID) {
     return null;
   }
@@ -312,12 +219,12 @@ export async function getTrain(trainId: string, user?: AppUser): Promise<Train |
     const rawTrain = doc.data() as RawTrainRecord;
     
     if (user && user.role !== "admin" && rawTrain.ownerId !== user.uid) {
-      const perms = await db.collection("trainAssignments")
-        .where("trainId", "==", trainId)
-        .where("userId", "==", user.uid)
-        .get();
-        
-      if (perms.empty) {
+      const hasAssignment = (await listActiveAssignedTrainIds(db, user.uid)).includes(trainId);
+      if (!hasAssignment) {
+        return null;
+      }
+
+      if (user.role === "worker" && !canWorkerViewTrain(rawTrain)) {
         return null;
       }
     }
@@ -341,10 +248,6 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
     offlineTrains: 0
   };
 
-  if (isDemoMode()) {
-    return computeSummary(DEMO_TRAINS);
-  }
-
   if (!process.env.FIREBASE_PROJECT_ID) {
     return empty;
   }
@@ -354,8 +257,7 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
 
     let allowedTrainIds: string[] | null = null;
     if (user && user.role !== "admin") {
-      const perms = await db.collection("trainAssignments").where("userId", "==", user.uid).get();
-      allowedTrainIds = perms.docs.map(doc => doc.data().trainId as string);
+      allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
     }
 
     const snapshot = await db.collection("trains").select("status", "ownerId").get();
@@ -367,6 +269,13 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
 
     if (user && allowedTrainIds !== null) {
       trains = trains.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
+      if (user.role === "worker") {
+        const trainsSnapshot = await db.collection("trains").select("clearanceStatus", "journeyStage").get();
+        const workerVisibilityMap = new Map(
+          trainsSnapshot.docs.map((doc) => [doc.id, canWorkerViewTrain(doc.data() as RawTrainRecord)])
+        );
+        trains = trains.filter((train) => workerVisibilityMap.get(train.id) ?? true);
+      }
     }
 
     return {
@@ -383,29 +292,10 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
   }
 }
 
-function computeSummary(trains: Train[]): TrainSummary {
-  return {
-    totalTrains: trains.length,
-    activeTrains: trains.filter((t) => t.status === "active").length,
-    idleTrains: trains.filter((t) => t.status === "idle").length,
-    warningTrains: trains.filter((t) => t.status === "warning").length,
-    criticalTrains: trains.filter((t) => t.status === "critical").length,
-    offlineTrains: trains.filter((t) => t.status === "offline").length
-  };
-}
-
 // ── Train selector (replaces old train-selector.ts) ──────────────────
 
 export async function listTrainSelectorItems(user?: AppUser): Promise<TrainSelectorResponse> {
   const fetchedAt = new Date().toISOString();
-
-  if (isDemoMode()) {
-    return {
-      trains: DEMO_TRAINS.map(trainToSelectorItem),
-      source: "demo",
-      fetchedAt
-    };
-  }
 
   if (!process.env.FIREBASE_PROJECT_ID) {
     return { trains: [], source: "empty", fetchedAt };
@@ -417,8 +307,7 @@ export async function listTrainSelectorItems(user?: AppUser): Promise<TrainSelec
     // 1. Resolve permitted train IDs
     let allowedTrainIds: string[] | null = null;
     if (user && user.role !== "admin") {
-      const perms = await db.collection("trainAssignments").where("userId", "==", user.uid).get();
-      allowedTrainIds = perms.docs.map(doc => doc.data().trainId as string);
+      allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
     }
 
     const snapshot = await db.collection("trains").limit(50).get();
@@ -426,6 +315,9 @@ export async function listTrainSelectorItems(user?: AppUser): Promise<TrainSelec
     
     if (user && allowedTrainIds !== null) {
       trainsRaw = trainsRaw.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
+      if (user.role === "worker") {
+        trainsRaw = trainsRaw.filter((train) => canWorkerViewTrain(train as unknown as RawTrainRecord));
+      }
     }
     
     const trains = trainsRaw

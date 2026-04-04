@@ -1,8 +1,11 @@
 import { AuthCard } from "@/features/auth/components/AuthCard";
 import { AuthGuardNotice } from "@/features/auth/components/AuthGuardNotice";
 import { OnboardingForm } from "@/features/auth/components/OnboardingForm";
+import { requireIncompleteUser } from "@/lib/auth/guards";
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  await requireIncompleteUser();
+
   return (
     <div className="w-full max-w-md space-y-4">
       <AuthGuardNotice

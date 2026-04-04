@@ -10,18 +10,13 @@ export async function POST(request: Request) {
     const body = sessionTokenSchema.parse(await request.json());
     const decodedToken = await verifyIdToken(body.idToken);
 
-    // Admin signup from invite page sets role immediately.
-    // Regular signup defers role selection to /onboarding.
-    const isAdmin = body.role === "admin";
-
     const user = await ensureUserProfile(decodedToken.uid, {
-      defaultRole: isAdmin ? "admin" : undefined,
+      defaultRole: "not-set",
       forceCreate: true
     }).catch(() =>
       getAuthOnlyUserProfile(decodedToken.uid, {
-        defaultRole: isAdmin ? "admin" : "worker",
-        defaultReadOnly: !isAdmin,
-        defaultRoleSelected: isAdmin
+        defaultRole: "not-set",
+        defaultReadOnly: true
       })
     );
 

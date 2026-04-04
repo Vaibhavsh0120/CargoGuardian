@@ -2,8 +2,7 @@ import { z } from "zod";
 
 import { CARGO_TYPE_VALUES, TRAIN_STATUS_VALUES } from "@/types/train";
 
-// ── Create train schema ──────────────────────────────────────────────
-
+// Create train schema
 export const createTrainSchema = z.object({
   code: z
     .string()
@@ -26,36 +25,45 @@ export const createTrainSchema = z.object({
     .max(500, "Max speed cannot exceed 500 km/h.")
     .nullable()
     .optional()
-    .transform((v) => v ?? null),
+    .transform((value) => value ?? null),
   origin: z
     .string()
     .max(120)
     .nullable()
     .optional()
-    .transform((v) => v?.trim() || null),
+    .transform((value) => value?.trim() || null),
   destination: z
     .string()
     .max(120)
     .nullable()
     .optional()
-    .transform((v) => v?.trim() || null),
+    .transform((value) => value?.trim() || null),
   routeId: z
     .string()
     .nullable()
     .optional()
-    .transform((v) => v ?? null),
+    .transform((value) => value ?? null),
   description: z
     .string()
     .max(500)
     .nullable()
     .optional()
-    .transform((v) => v?.trim() || null)
+    .transform((value) => value?.trim() || null),
+  blynkAuthToken: z
+    .string()
+    .min(8, "Blynk Auth Token is required.")
+    .max(255, "Blynk Auth Token is too long."),
+  blynkDeviceId: z
+    .string()
+    .max(255)
+    .nullable()
+    .optional()
+    .transform((value) => value?.trim() || null)
 });
 
 export type CreateTrainPayload = z.infer<typeof createTrainSchema>;
 
-// ── Query params ──────────────────────────────────────────────────
-
+// Query params
 export const trainListQuerySchema = z.object({
   status: z.enum(TRAIN_STATUS_VALUES).optional(),
   search: z.string().max(100).optional(),

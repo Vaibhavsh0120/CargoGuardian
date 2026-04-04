@@ -1,4 +1,6 @@
-export type UserRole = "worker" | "master" | "admin";
+export const USER_ROLE_VALUES = ["not-set", "worker", "master", "admin"] as const;
+
+export type UserRole = (typeof USER_ROLE_VALUES)[number];
 
 export type AppUser = {
   uid: string;
@@ -7,7 +9,6 @@ export type AppUser = {
   role: UserRole;
   readOnly: boolean;
   isNewProfile?: boolean;
-  roleSelected?: boolean;
 };
 
 export type TrainAssignment = {
@@ -19,3 +20,11 @@ export type TrainAssignment = {
   grantedAt: string;
   expiresAt: string | null;
 };
+
+export function isRoleSelectionRequired(role: UserRole) {
+  return role === "not-set";
+}
+
+export function isOnboardingComplete(user: Pick<AppUser, "role"> | null | undefined) {
+  return Boolean(user && !isRoleSelectionRequired(user.role));
+}

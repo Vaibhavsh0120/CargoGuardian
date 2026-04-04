@@ -1,34 +1,91 @@
-import { AuthStatusControls } from "@/features/auth/components/AuthStatusControls";
+"use client";
 
-import { AppCommandBar } from "@/components/layout/AppCommandBar";
-import { AppStatusIndicators } from "@/components/layout/AppStatusIndicators";
-import { TrainSelector } from "@/components/layout/TrainSelector";
+import { usePathname } from "next/navigation";
+import { TrainFront } from "lucide-react";
+
+import { AuthStatusControls } from "@/features/auth/components/AuthStatusControls";
+import { useTrainContext } from "@/hooks/useTrainContext";
+import { cn } from "@/lib/utils";
+
+const HIDDEN_ROUTES = ["/settings"];
 
 export function AppHeader() {
-  return (
-    <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-4">
-          <div className="min-w-0 flex-1 lg:hidden">
-            <p className="font-display text-xl font-extrabold tracking-tight text-foreground">
-              CargoGuardian
-            </p>
-            <p className="truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Rail operations console
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <AppStatusIndicators />
-            <AuthStatusControls />
-          </div>
-        </div>
+  const pathname = usePathname();
+  const isHidden = HIDDEN_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <AppCommandBar compact className="lg:hidden" />
-          <AppCommandBar className="hidden lg:flex" />
-          <TrainSelector />
-        </div>
+  if (isHidden) {
+    return null;
+  }
+
+  return (
+    <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-xl">
+      <CompactTrainSelector />
+      <div className="ml-auto">
+        <AuthStatusControls compact />
       </div>
     </header>
+  );
+}
+
+function CompactTrainSelector() {
+  const { isError, isLoading, refresh, selectedTrain, selectedTrainId, setSelectedTrainId, trains } =
+    useTrainContext();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <TrainFront className="h-4 w-4" />
+        <span>Loading...</span>
+      </div>
+    );
+  }
+
+  if (isError || !trains.length) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          void refresh();
+        }}
+        className="flex items-center gap-2 rounded-md border border-border/60 px-2 py-1 text-sm text-muted-foreground transition hover:bg-muted/50 hover:text-foreground"
+        title={isError ? "Retry loading trains" : "Refresh train list"}
+      >
+        <TrainFront className="h-4 w-4" />
+        <span>{isError ? "Retry trains" : "No trains"}</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <TrainFront className="h-4 w-4 text-muted-foreground" />
+      <select
+        value={selectedTrainId ?? ""}
+        onChange={(event) => setSelectedTrainId(event.target.value || null)}
+        className="h-7 rounded-md border border-border/60 bg-transparent px-2 text-sm font-medium text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        {trains.map((train) => (
+          <option key={train.id} value={train.id}>
+            {train.code} - {train.label}
+          </option>
+        ))}
+      </select>
+      {selectedTrain ? (
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            selectedTrain.status === "active"
+              ? "bg-emerald-500"
+              : selectedTrain.status === "warning"
+                ? "bg-amber-500"
+                : selectedTrain.status === "critical"
+                  ? "bg-red-500"
+                  : "bg-muted"
+          )}
+        />
+      ) : null}
+    </div>
   );
 }

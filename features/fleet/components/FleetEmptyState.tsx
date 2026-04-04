@@ -4,7 +4,7 @@ import { TrainFront } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 
-export function FleetEmptyState({ hasFilters }: { hasFilters: boolean }) {
+export function FleetEmptyState({ hasFilters, canCreateTrain }: { hasFilters: boolean; canCreateTrain: boolean }) {
   return (
     <section className="rounded-[1.75rem] border border-dashed border-border/80 bg-card/80 p-8 text-center shadow-panel">
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4">
@@ -18,10 +18,12 @@ export function FleetEmptyState({ hasFilters }: { hasFilters: boolean }) {
           <p className="text-sm text-muted-foreground">
             {hasFilters
               ? "Try adjusting your search or removing filters to see more results."
-              : "Register your first train to start monitoring its cargo and telemetry."}
+              : canCreateTrain
+                ? "Add your first train and link its Blynk device to start receiving telemetry."
+                : "No trains are currently visible in your workspace. Request access from a master or admin if needed."}
           </p>
         </div>
-        {!hasFilters ? (
+        {!hasFilters && canCreateTrain ? (
           <Link href={"/trains/new" as Route} className={buttonVariants()}>
             Add train
           </Link>
