@@ -75,7 +75,7 @@ export async function getCurrentSessionUser() {
         defaultReadOnly:
           typeof decodedToken.readOnly === "boolean"
             ? decodedToken.readOnly
-            : normalizeRole(decodedToken.role) === "viewer"
+            : normalizeRole(decodedToken.role) === "worker"
       });
     }
   } catch {

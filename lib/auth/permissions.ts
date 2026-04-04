@@ -1,8 +1,8 @@
 import type { AppUser, UserRole } from "@/types/user";
 
 const roleWeight: Record<UserRole, number> = {
-  viewer: 1,
-  operator: 2,
+  worker: 1,
+  master: 2,
   admin: 3
 };
 
@@ -15,5 +15,5 @@ export function hasRole(user: AppUser | null, minimumRole: UserRole) {
 }
 
 export function isReadOnlyUser(user: AppUser | null) {
-  return Boolean(user?.readOnly || user?.role === "viewer");
+  return Boolean(user?.readOnly || user?.role === "worker");
 }

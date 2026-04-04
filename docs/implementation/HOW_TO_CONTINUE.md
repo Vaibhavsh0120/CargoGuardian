@@ -63,7 +63,7 @@ For every phase:
 
 ## Current State At Time Of Writing
 
-- Phases 1, 2, and 3 are complete.
+- Phases 1, 2, 3, and 4 are complete.
 - The project now has:
   - Next.js foundation
   - shared providers and theme system
@@ -76,14 +76,21 @@ For every phase:
   - route-aware desktop and mobile navigation
   - train selector context with persisted selection
   - shell loading/error state conventions
+  - fleet list with search, filter, and sort
+  - train detail page with overview and route progress
+  - add train workflow with Firestore-backed creation
+  - role-scoped train access (admin sees all, masters see assigned, workers see clearance-scoped)
+  - train access grant/revoke/request endpoints
+  - dashboard summary based on live train counts
+  - demo mode fallback behind `NEXT_PUBLIC_DEMO_MODE`
 - Finalized user-facing screens at this stage:
   - `/login`
   - `/signup`
   - `/forgot-password`
-- Fleet, devices, telemetry, alerts, map, analytics, and data-rich train workflows are still pending.
+- Device pairing, telemetry, alerts, map, analytics, and data-rich train workflows are still pending.
 
 ## Next Expected Phase
 
 The next implementation phase is:
 
-- [phase-04-fleet-management.md](./phase-04-fleet-management.md)
+- [phase-05-device-pairing.md](./phase-05-device-pairing.md)

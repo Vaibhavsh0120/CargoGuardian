@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         defaultReadOnly:
           typeof decodedToken.readOnly === "boolean"
             ? decodedToken.readOnly
-            : normalizeRole(decodedToken.role) === "viewer"
+            : normalizeRole(decodedToken.role) === "worker"
       })
     );
 

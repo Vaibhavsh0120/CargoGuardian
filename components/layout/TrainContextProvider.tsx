@@ -59,7 +59,7 @@ export function TrainContextProvider({ children }: Readonly<{ children: React.Re
 }
 
 async function fetchTrainSelectorItems(): Promise<TrainSelectorResponse> {
-  const response = await fetch("/api/trains", {
+  const response = await fetch("/api/trains?mode=selector", {
     method: "GET",
     cache: "no-store"
   });

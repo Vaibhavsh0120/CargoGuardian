@@ -14,6 +14,7 @@ const serverEnvSchema = z.object({
   TIGERGRAPH_API_KEY: z.string().optional(),
   MAPBOX_SECRET_TOKEN: z.string().optional(),
   SESSION_COOKIE_SECRET: z.string().optional(),
+  ADMIN_INVITE_SECRET: z.string().optional(),
   LOG_LEVEL: z.string().default("info")
 });
 
@@ -32,6 +33,7 @@ export function getServerEnv() {
     TIGERGRAPH_API_KEY: process.env.TIGERGRAPH_API_KEY,
     MAPBOX_SECRET_TOKEN: process.env.MAPBOX_SECRET_TOKEN,
     SESSION_COOKIE_SECRET: process.env.SESSION_COOKIE_SECRET,
+    ADMIN_INVITE_SECRET: process.env.ADMIN_INVITE_SECRET,
     LOG_LEVEL: process.env.LOG_LEVEL
   });
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { signupWithEmailPassword } from "@/features/auth/services/auth-client";
@@ -19,6 +20,7 @@ function normalizeAuthError(error: unknown) {
 }
 
 export function useSignup() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -33,6 +35,8 @@ export function useSignup() {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+      router.replace("/onboarding" as Parameters<typeof router.replace>[0]);
+      router.refresh();
     }
   });
 }

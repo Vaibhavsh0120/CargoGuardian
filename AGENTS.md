@@ -29,7 +29,7 @@ The system must deploy cleanly on Vercel and keep secrets out of the client.
 
 At the time this file was last updated:
 
-- **Phases 1, 2, and 3 are complete**
+- **Phases 1, 2, 3, and 4 are complete**
 - The repository already contains:
   - Next.js 15 App Router foundation
   - TypeScript configuration
@@ -47,14 +47,20 @@ At the time this file was last updated:
   - local commit-safety protections for env files, service-account JSON files, and common key material
   - health endpoint
   - phase planning documents under `docs/implementation/`
+  - fleet list with search, status filter, and sort
+  - train detail page with overview and route progress
+  - add train workflow with Firestore-backed creation
+  - role-scoped train access (admin sees all, masters see assigned, workers see clearance-scoped)
+  - train access grant, revoke, and request endpoints
+  - dashboard summary based on live, role-scoped train counts
+  - demo mode fallback behind `NEXT_PUBLIC_DEMO_MODE`
 
 What is **not** yet implemented:
 
-- Real train, device, telemetry, alert, map, analytics, or history features
-- Firestore data access services
+- Real device, telemetry, alert, map, analytics, or history features
 - Blynk integration
 - TigerGraph integration
-- Real route-aware dashboard functionality
+- Real route-aware dashboard functionality beyond train counts
 
 ## 3. Read Order Before Any Work
 

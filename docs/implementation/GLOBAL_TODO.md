@@ -2,9 +2,13 @@
 
 This file tracks all remaining work across the project. It is intentionally broader than any single phase file.
 
+## Data Mode Policy
+
+- When `NEXT_PUBLIC_DEMO_MODE=false` (default): the project will only and only use true and real data from Firebase, Blynk, TigerGraph, and all other integrations. No simulated, mocked, or placeholder data is ever shown.
+- When `NEXT_PUBLIC_DEMO_MODE=true`: all data is simulated for testing and verification purposes. The UI must never show any label, badge, banner, or indicator that data is simulated — it must look identical to real data. This mode exists solely for the developer to verify that everything is working correctly before real integrations are connected.
+
 ## Remaining Core Work
 
-- Implement fleet list, train detail, and add train flows.
 - Implement device inventory, device detail, pair device wizard, and assignment history.
 - Add Blynk device validation and telemetry ingestion routes.
 - Store realtime telemetry snapshots and historical telemetry records in Firestore.
@@ -57,8 +61,10 @@ This file tracks all remaining work across the project. It is intentionally broa
 
 - Current UI primitives are intentionally lightweight Phase 1 implementations and may need to be upgraded to fuller shadcn component behavior when the relevant interactions arrive.
 - Theme switching is local-only and not yet persisted.
-- Firebase auth wrappers are implemented, but Firestore domain service layers for trains, devices, telemetry, alerts, analytics, and history are still pending.
 - Placeholder routes exist for shell completeness and should be replaced phase-by-phase rather than left in place.
+- `CreateTrainInput` in `types/train.ts` and `CreateTrainPayload` in `lib/validation/trains.ts` are maintained separately. Consider deriving one from the other to prevent future drift.
+- `routeName` is hardcoded to `null` when creating trains; should be resolved from the `routes` collection once that collection exists.
+- `accessRequests` collection created by the access request endpoint needs Firestore security rules and indexes.
 
 ## Demo Preparation TODO
 

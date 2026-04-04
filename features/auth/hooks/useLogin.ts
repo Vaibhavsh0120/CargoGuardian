@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { loginWithEmailPassword } from "@/features/auth/services/auth-client";
@@ -19,6 +20,7 @@ function normalizeAuthError(error: unknown) {
 }
 
 export function useLogin() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -31,8 +33,14 @@ export function useLogin() {
         throw new Error(normalizeAuthError(error));
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+      if (data.user && !data.user.roleSelected) {
+        router.replace("/onboarding" as Parameters<typeof router.replace>[0]);
+      } else {
+        router.replace("/dashboard" as Parameters<typeof router.replace>[0]);
+      }
+      router.refresh();
     }
   });
 }

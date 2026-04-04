@@ -22,8 +22,8 @@ export async function createLoginSession(idToken: string) {
   return postAuthCookie("/api/auth/login", { idToken });
 }
 
-export async function createSignupSession(idToken: string) {
-  return postAuthCookie("/api/auth/signup", { idToken });
+export async function createSignupSession(idToken: string, role?: "admin") {
+  return postAuthCookie("/api/auth/signup", { idToken, ...(role && { role }) });
 }
 
 export async function syncSession(idToken: string) {

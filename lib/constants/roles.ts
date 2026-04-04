@@ -1,7 +1,7 @@
 import type { UserRole } from "@/types/user";
 
 export const roleLabels: Record<UserRole, string> = {
-  viewer: "View only",
-  operator: "Operator",
+  worker: "Worker",
+  master: "Train Master",
   admin: "Administrator"
 };

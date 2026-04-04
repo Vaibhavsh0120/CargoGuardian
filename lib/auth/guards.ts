@@ -17,7 +17,7 @@ export async function requireUser() {
 export async function redirectAuthenticatedUser() {
   const user = await getCurrentSessionUser();
 
-  if (user) {
+  if (user && user.roleSelected) {
     redirect("/dashboard");
   }
 }

@@ -164,3 +164,28 @@ The result should be that an operator can view the fleet, create a train asset, 
 **Critical for demo**
 
 The demo narrative depends on choosing a train and opening its operational view. This phase creates that core path.
+
+## Implementation Notes
+
+This phase introduced several robust additions to data fetching and authentication flow:
+
+1. **Role Adjustments**: We migrated the `viewer`/`operator` role nomenclature to `worker`/`master` to reflect the operational reality. We also ensured the database reads and endpoints universally default correctly and reject unauthenticated flows.
+2. **Onboarding**: A custom intermediate endpoint (`/onboarding`) was built for users signing in via Google so they could properly establish their Role before interacting with the system, closing a gap in the auth provider abstraction.
+3. **Admin Onboarding**: Instead of building out an entire independent dashboard for onboarding admins, we secured the `admin` creation path through a query param check comparing `searchParams.code` to `process.env.ADMIN_INVITE_SECRET`.
+4. **Access and Assignments Model**: Under the hood, Train read checks are fully scope-aware today. An admin will view everything, a user with ownership views their train, and the `trainAssignments` collection determines shared read/write scope. Future UI tasks can now freely consume `/api/trains/assignments` and `/api/trains/access`.
+5. **Route Progress Component**: `RouteProgressCard.tsx` stub was implemented and included in the frontend page layout.
+
+### Post-Phase Audit Fixes
+
+After the initial implementation, the following issues were identified and resolved:
+
+1. **Security: Train summary endpoint bypassed access check** — `app/api/trains/[trainId]/summary/route.ts` was calling `getTrain(trainId)` without passing the authenticated user, allowing any authenticated user to fetch any train's summary. Fixed by passing `user` to `getTrain()`.
+2. **Security: `getTrainSummary()` was not user-scoped** — Workers and masters received fleet-wide counts instead of scoped counts. Fixed by adding an optional `user?: AppUser` parameter to `getTrainSummary()` and applying the same assignment-based filtering used in `listTrains()`.
+3. **Security: Dashboard summary endpoint bypassed user scoping** — `app/api/dashboard/summary/route.ts` and `services/dashboard/summary.ts` were calling `getTrainSummary()` without passing the user. Fixed by threading the user through both layers.
+4. **Missing endpoint: `POST /api/trains/access/request`** — Created `app/api/trains/access/request/route.ts` to allow workers and masters to request access to trains. Stores requests in a new `accessRequests` collection with pending status, deduplication, and role-aware submission.
+5. **Type mismatch: `grantedAt` Timestamp normalization** — `app/api/trains/assignments/route.ts` was passing Firestore `Timestamp` objects directly to the client without converting to ISO strings. Added a `normalizeTimestamp()` helper to handle `string`, `Date`, and Firestore `Timestamp` values.
+6. **Code quality: Dead comment block in assignments endpoint** — Removed the large commented-out reasoning block and standardized the response to use the `ok()` helper instead of `NextResponse.json()`.
+7. **Code quality: Non-null assertions in access endpoint** — Replaced `trainDoc.data()!` with explicit null checks and safe error responses.
+8. **Code quality: Mixed response patterns** — Standardized `app/api/trains/access/route.ts` and `app/api/trains/assignments/route.ts` to use the `ok()` helper from `@/lib/api/response` for consistency.
+9. **Type alignment: `CreateTrainInput` vs `CreateTrainPayload`** — Made `CreateTrainInput` in `types/train.ts` non-optional for all fields to match the Zod-validated `CreateTrainPayload` shape, eliminating a potential drift gap.
+10. **Server/client boundary: `RouteProgressCard.tsx`** — Added `"use client"` directive since the component is rendered inside a client component tree.

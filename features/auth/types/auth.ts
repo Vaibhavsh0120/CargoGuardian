@@ -18,4 +18,5 @@ export type SignupFormInput = {
 
 export type SessionCookiePayload = {
   idToken: string;
+  role?: "worker" | "master" | "admin";
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { signInWithGooglePopup } from "@/features/auth/services/auth-client";
@@ -26,6 +27,7 @@ function normalizeGoogleAuthError(error: unknown) {
 }
 
 export function useGoogleAuth() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -38,8 +40,14 @@ export function useGoogleAuth() {
         throw new Error(normalizeGoogleAuthError(error));
       }
     },
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       await queryClient.invalidateQueries({ queryKey: ["auth", "session"] });
+      if (data.user && !data.user.roleSelected) {
+        router.replace("/onboarding" as Parameters<typeof router.replace>[0]);
+      } else {
+        router.replace("/dashboard" as Parameters<typeof router.replace>[0]);
+      }
+      router.refresh();
     }
   });
 }

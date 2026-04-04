@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,8 +15,6 @@ import { useSignup } from "@/features/auth/hooks/useSignup";
 type AuthMode = "login" | "signup";
 
 export function AuthForm({ mode }: Readonly<{ mode: AuthMode }>) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loginMutation = useLogin();
   const signupMutation = useSignup();
@@ -47,11 +44,6 @@ export function AuthForm({ mode }: Readonly<{ mode: AuthMode }>) {
           password
         } satisfies SignupFormInput);
       }
-
-      startTransition(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Authentication failed.");
     }
@@ -62,21 +54,18 @@ export function AuthForm({ mode }: Readonly<{ mode: AuthMode }>) {
 
     try {
       await googleAuthMutation.mutateAsync();
-      startTransition(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      });
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Authentication failed.");
     }
   }
 
-  const loading =
-    isPending || loginMutation.isPending || signupMutation.isPending || googleAuthMutation.isPending;
+  const loading = loginMutation.isPending || signupMutation.isPending || googleAuthMutation.isPending;
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      {mode === "signup" ? <Input name="displayName" placeholder="Full name" required /> : null}
+      {mode === "signup" ? (
+        <Input name="displayName" placeholder="Full name" required />
+      ) : null}
       <Input name="email" type="email" placeholder="operator@cargoguardian.dev" required />
       <Input name="password" type="password" placeholder="Password" required minLength={8} />
       {mode === "signup" ? (

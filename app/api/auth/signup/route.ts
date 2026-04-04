@@ -9,16 +9,23 @@ export async function POST(request: Request) {
   try {
     const body = sessionTokenSchema.parse(await request.json());
     const decodedToken = await verifyIdToken(body.idToken);
-    const sessionCookie = await createSessionCookie(body.idToken);
+
+    // Admin signup from invite page sets role immediately.
+    // Regular signup defers role selection to /onboarding.
+    const isAdmin = body.role === "admin";
+
     const user = await ensureUserProfile(decodedToken.uid, {
-      defaultRole: "operator",
+      defaultRole: isAdmin ? "admin" : undefined,
       forceCreate: true
     }).catch(() =>
       getAuthOnlyUserProfile(decodedToken.uid, {
-        defaultRole: "operator",
-        defaultReadOnly: false
+        defaultRole: isAdmin ? "admin" : "worker",
+        defaultReadOnly: !isAdmin,
+        defaultRoleSelected: isAdmin
       })
     );
+
+    const sessionCookie = await createSessionCookie(body.idToken);
 
     const response = NextResponse.json({
       authenticated: true,
