@@ -17,6 +17,16 @@
     @apply bg-background font-sans text-foreground antialiased;
   }
 
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
   a {
     @apply text-inherit;
   }
@@ -33,6 +43,36 @@
 }
 
 @layer utilities {
+  @keyframes skeleton-shimmer {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  .skeleton-block {
+    position: relative;
+    overflow: hidden;
+    background-color: hsl(var(--muted));
+  }
+
+  .skeleton-block::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--background) / 0.72),
+      transparent
+    );
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+
   .text-balance {
     text-wrap: balance;
   }

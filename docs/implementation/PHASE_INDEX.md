@@ -2,7 +2,7 @@
 
 CargoGuardian is being built in controlled phases. Each phase must leave the app runnable and consistent with the operational model.
 
-Phases 1 through 6 are complete.
+Phases 1 through 7 are complete.
 
 Important architecture decisions already locked in:
 
@@ -13,6 +13,9 @@ Important architecture decisions already locked in:
 - Blynk webhooks remain the primary inbound telemetry path, while outbound device commands should use server-side Blynk device API writes with the stored train token
 - worker visibility is pre-clearance only
 - masters can review worker access requests for trains they manage
+- future installable web-app support must keep live telemetry network-first and auto-refreshing rather than relying on manual reloads
+- future map work must distinguish planned route geometry from actual GPS travel history
+- TigerGraph remains a server-side analytics engine whose results are cached back into Firestore
 
 ## Phase Order
 
@@ -22,7 +25,7 @@ Important architecture decisions already locked in:
 4. Phase 4 - Fleet and Train Management `(completed)`
 5. Phase 5 - Device Pairing and Hardware Management `(completed)`
 6. Phase 6 - Telemetry and Real-Time Updates `(completed)`
-7. Phase 7 - Alerts, Clearance, and Event History
+7. Phase 7 - Alerts, Clearance, and Event History `(completed)`
 8. Phase 8 - Map Integration
 9. Phase 9 - Analytics Integration
 10. Phase 10 - Dashboard Optimization and Polishing
@@ -37,10 +40,10 @@ Important architecture decisions already locked in:
 | 4 - Fleet and Train Management | Completed | Fleet list, train detail, Add Train, role-scoped access model |
 | 5 - Device Pairing and Hardware Management | Completed | Manual Blynk device linking, ingest route, simulator |
 | 6 - Telemetry and Real-Time Updates | Completed | Current telemetry APIs, derived speed/freshness, live dashboard and train-detail telemetry UI |
-| 7 - Alerts, Clearance, and Event History | Pending | Alert rules, request inbox UI, clearance actions, history timeline |
-| 8 - Map Integration | Pending | Live train map, route overlays, incident-location support |
-| 9 - Analytics Integration | Pending | TigerGraph insights, risk scoring, cached analytics views |
-| 10 - Dashboard Optimization and Polishing | Pending | Final state polish, docs, performance, demo hardening |
+| 7 - Alerts, Clearance, and Event History | Completed | Alert rules, request inbox UI, role-based access workspace, clearance actions, event logging, branded installable-app foundation, and action-first dashboard restructure |
+| 8 - Map Integration | Pending | Free live train map, source/destination route modeling, planned-vs-actual path overlays, incident-location support |
+| 9 - Analytics Integration | Pending | TigerGraph graph pipeline, train/route/corridor risk insights, and Firestore-cached analytics views |
+| 10 - Dashboard Optimization and Polishing | Pending | Final performance budgets, install QA, docs, resilience, and demo hardening |
 
 ## Dependency Rules
 
@@ -90,4 +93,4 @@ A phase is complete only when:
 
 The next implementation phase is:
 
-- [phase-07-alerts-history.md](./phase-07-alerts-history.md)
+- [phase-08-map.md](./phase-08-map.md)

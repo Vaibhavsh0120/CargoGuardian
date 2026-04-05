@@ -48,6 +48,9 @@ The real product model is:
 - clearance can be remote or RFID-backed
 - live transit risk comes from GPS plus weight changes
 - speed is derived in CargoGuardian from GPS history
+- future installable web-app support must keep live operational data network-first and automatically refreshed
+- future map work must show both the planned route and the actual traveled GPS trail
+- future TigerGraph work must stay server-side and write cached insight documents back into Firestore
 
 ## Demo Policy
 
@@ -64,7 +67,7 @@ It must not:
 - change routing
 - add demo labels or demo badges in the UI
 
-## Completed Through Phase 6
+## Completed Through Phase 7
 
 - Auth, onboarding, and admin invite flow
 - Protected app shell
@@ -83,9 +86,16 @@ It must not:
 - Derived speed, freshness, and offline telemetry logic
 - Dashboard telemetry overview
 - Train-detail telemetry cards, trend chart, and stream fallback
+- Real alerts page and train-scoped alert panels
+- Role-based access workspace in the protected shell
+- Event logging pipeline and recent event/history surfaces on dashboard and train detail
+- Admin/master request inbox UI and worker request submission UI
+- Remote and RFID-backed clearance action flow
+- Action-first dashboard restructure
+- Manifest-based install foundation, supplied app icon, and live operational refresh behavior
 
 ## Next Phase
 
 The next implementation phase is:
 
-- [phase-07-alerts-history.md](./phase-07-alerts-history.md)
+- [phase-08-map.md](./phase-08-map.md)

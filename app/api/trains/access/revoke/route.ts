@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { ok, failure } from "@/lib/api/response";
 import { getCurrentSessionUser } from "@/lib/auth/session";
+import { recordOperationalEvent } from "@/services/events/write";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
 import { canUserManageTrain } from "@/services/trains/access";
 import { FieldValue } from "firebase-admin/firestore";
@@ -76,6 +77,27 @@ export async function POST(request: Request) {
     await db.collection("trainAssignments").doc(assignmentDoc.id).update({
       revokedAt: FieldValue.serverTimestamp(),
       revokedBy: user.uid
+    });
+
+    await recordOperationalEvent({
+      category: "access",
+      action: "access-revoked",
+      title: "Access revoked",
+      description: `${user.displayName ?? user.email ?? "Operator"} revoked access for ${body.userEmail}.`,
+      trainId: body.trainId,
+      trainCode: typeof trainData.code === "string" ? trainData.code : body.trainId,
+      trainLabel:
+        typeof trainData.label === "string"
+          ? trainData.label
+          : typeof trainData.code === "string"
+            ? trainData.code
+            : body.trainId,
+      actorId: user.uid,
+      actorLabel: user.displayName ?? user.email ?? "Operator",
+      actorRole: user.role,
+      metadata: {
+        revokedUserEmail: body.userEmail
+      }
     });
 
     return ok({ success: true });

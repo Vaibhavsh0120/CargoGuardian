@@ -2,6 +2,7 @@ import "server-only";
 
 import { logger } from "@/lib/logger";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
+import { applyBlynkConnectionToFreshness, getBlynkConnectionOverrides } from "@/services/telemetry/live-status";
 import { listAccessibleTrains, getTrain } from "@/services/trains/read";
 import {
   deriveDisplayJourneyStage,
@@ -107,10 +108,11 @@ function resolveSpeed(current: RawTelemetryRecord, previous: RawTelemetryRecord 
 function buildTelemetrySnapshot(
   train: Train,
   current: RawTelemetryRecord | null,
-  previous: RawTelemetryRecord | null = null
+  previous: RawTelemetryRecord | null = null,
+  blynkConnected: boolean | null = null
 ): TelemetrySnapshot {
   const reportedAt = current?.createdAt ?? train.lastSeen;
-  const freshness = deriveTelemetryFreshness(reportedAt);
+  const freshness = applyBlynkConnectionToFreshness(deriveTelemetryFreshness(reportedAt), blynkConnected);
   const weightWarningState = current?.weightWarningState ?? inferWarningStateFromWeightStatus(train.weightStatus);
   const weightStatus = current ? deriveWeightStatus(current.weightKg, weightWarningState) : train.weightStatus;
   const speedKmh = current ? resolveSpeed(current, previous) : null;
@@ -321,8 +323,16 @@ export async function listCurrentTelemetry(limit: number, user?: AppUser): Promi
       telemetryByTrainId.set(doc.id, mapTelemetryRecord(doc.id, doc.data() as RawRecord));
     });
 
+    const connectionOverrides = await getBlynkConnectionOverrides(trains);
     const snapshots = trains
-      .map((train) => buildTelemetrySnapshot(train, telemetryByTrainId.get(train.id) ?? null))
+      .map((train) =>
+        buildTelemetrySnapshot(
+          train,
+          telemetryByTrainId.get(train.id) ?? null,
+          null,
+          connectionOverrides.get(train.id) ?? null
+        )
+      )
       .sort(compareSnapshotPriority);
 
     return {
@@ -360,15 +370,17 @@ export async function getCurrentTelemetry(trainId: string, user?: AppUser): Prom
   try {
     const db = getFirebaseAdminDb();
     const currentDoc = await db.collection("telemetry_current").doc(trainId).get();
+    const connectionOverrides = await getBlynkConnectionOverrides([train]);
+    const blynkConnected = connectionOverrides.get(train.id) ?? null;
 
     if (!currentDoc.exists) {
-      return buildTelemetrySnapshot(train, null);
+      return buildTelemetrySnapshot(train, null, null, blynkConnected);
     }
 
     const current = mapTelemetryRecord(currentDoc.id, currentDoc.data() as RawRecord);
     const previous = await getPreviousHistoryPoint(trainId, current);
 
-    return buildTelemetrySnapshot(train, current, previous);
+    return buildTelemetrySnapshot(train, current, previous, blynkConnected);
   } catch (error) {
     logger.warn(`Failed to load current telemetry for train ${trainId}.`, error);
     return buildTelemetrySnapshot(train, null);

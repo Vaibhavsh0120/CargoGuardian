@@ -4,8 +4,8 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
 
 ## Current Status
 
-- Phases 1, 2, 3, 4, 5, and 6 are complete.
-- Phase 7 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, 6, and 7 are complete.
+- Phase 8 is the next implementation phase.
 - The implemented foundation already includes:
   - email/password and Google auth
   - admin invite flow
@@ -17,15 +17,28 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
   - admin-only Add Train flow
   - manual Blynk device linking during train creation
   - role-scoped train access
-  - access request, approval, rejection, grant, revoke, and delegate APIs
+  - access request, approval, rejection, grant, revoke, and delegate APIs plus reviewer/worker request UI
   - current telemetry APIs and train-scoped history reads
   - derived speed, freshness, stale, and offline telemetry state
   - live dashboard telemetry overview
   - live train-detail telemetry cards, trend chart, and stream fallback
   - telemetry ingest endpoint
+  - alert rules for overweight, underweight, stale/offline telemetry, and in-transit weight change
+  - real alerts page, layered role-based access workspace, and train-scoped alert/history panels
+  - remote and RFID-backed clearance workflows with Blynk clearance-LED sync
+  - event logging pipeline for alert, access, and clearance activity
+  - action-first dashboard restructure with role-specific operator views
+  - branded app identity, supplied app icon, and manifest-based installable-app foundation
+  - targeted live refresh for operational screens on interval, focus, reconnect, and visibility changes
   - console-controlled demo publisher for deployed app sessions
   - browser-controlled demo publisher with no separate demo terminal required for normal use
   - optional manual MQTT simulator only for explicit fallback testing
+
+## Planned Next Phases
+
+- Phase 8 will add the free map stack using planned source/destination routes, actual GPS breadcrumb trails, live train markers, and incident-location context.
+- Phase 9 will use TigerGraph server-side for train, route, and corridor risk analysis, then cache those insights back into Firestore for the UI.
+- Phase 10 will harden performance, installability, stale/offline handling, deployment docs, and demo readiness.
 
 ## Operational Model
 
@@ -70,6 +83,7 @@ CargoGuardian uses Blynk in two directions.
 - outbound device commands:
   - CargoGuardian uses the train's stored per-device Blynk Auth Token
   - server-side Blynk device API writes can update datastreams such as `clearanceLed`
+  - server-side Blynk connection-status reads can force the UI to show a linked train as offline when Blynk reports the hardware disconnected
   - the browser must never call Blynk directly
 
 ## Blynk Configuration
@@ -134,6 +148,11 @@ Future map work should use a free stack such as:
 
 - OpenStreetMap tiles
 - Leaflet or another free client library
+
+The route plan should distinguish:
+
+- planned source/destination path geometry stored in Firestore
+- actual traveled GPS breadcrumbs derived from telemetry history
 
 The current map route can stay placeholder until that phase is implemented.
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { ok, failure } from "@/lib/api/response";
 import { getCurrentSessionUser } from "@/lib/auth/session";
+import { recordOperationalEvent } from "@/services/events/write";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
 import { canUserManageTrain, userHasActiveTrainAssignment } from "@/services/trains/access";
 import { FieldValue } from "firebase-admin/firestore";
@@ -76,6 +77,28 @@ export async function POST(request: Request) {
     };
 
     const assignmentRef = await db.collection("trainAssignments").add(assignmentData);
+
+    await recordOperationalEvent({
+      category: "access",
+      action: "access-granted",
+      title: "Access granted",
+      description: `${user.displayName ?? user.email ?? "Operator"} granted ${body.role} access to ${body.userEmail}.`,
+      trainId: body.trainId,
+      trainCode: typeof trainData.code === "string" ? trainData.code : body.trainId,
+      trainLabel:
+        typeof trainData.label === "string"
+          ? trainData.label
+          : typeof trainData.code === "string"
+            ? trainData.code
+            : body.trainId,
+      actorId: user.uid,
+      actorLabel: user.displayName ?? user.email ?? "Operator",
+      actorRole: user.role,
+      metadata: {
+        grantedUserEmail: body.userEmail,
+        grantedRole: body.role
+      }
+    });
 
     return ok({ success: true, assignmentId: assignmentRef.id, userEmail: body.userEmail });
   } catch (error) {

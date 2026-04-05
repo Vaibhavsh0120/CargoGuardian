@@ -61,16 +61,9 @@ Train documents must carry at least:
 
 ## Remaining Core Work
 
-- Build clearance actions and history recording.
-- Build access request review UI for admins and masters.
-- Build alert rules for:
-  - overweight
-  - underweight
-  - offline hardware
-  - significant in-transit weight change
-- Build event history timeline.
-- Build map view with live train location and incident context.
-- Build analytics around cargo risk, route efficiency, and incident patterns.
+- Build map view with live train location, source/destination route setup, planned route overlays, actual breadcrumb trails, and incident context.
+- Build analytics around cargo risk, route efficiency, incident corridors, and suspicious journey patterns.
+- Define the TigerGraph ingestion, query, and Firestore cache pipeline.
 - Add train deletion flow that also deletes the Blynk device.
 
 ## Documentation Work
@@ -85,4 +78,8 @@ Train documents must carry at least:
 
 - `CreateTrainInput` and `CreateTrainPayload` are still maintained separately.
 - Telemetry payload compatibility currently tolerates legacy `errorLed` and `weightWarningLightColor` aliases; real hardware should use `weightWarningState`.
-- Access-control UI is not built yet even though the APIs exist.
+- Phase 7 alert documents are intentionally one active record per train-and-rule pair, with repeated occurrences tracked in the event log rather than separate alert documents.
+- The in-transit weight-change alert currently opens when the delta is at least 750 kg and at least 5% of the previous weight; tune this against real hardware behavior if false positives appear.
+- Future PWA caching must not hide stale telemetry or delay alert freshness.
+- Future map work must keep planned route geometry separate from actual GPS breadcrumbs.
+- Access handoff is currently email-address-driven inside the app; if the product later needs notifications, add server-side email delivery rather than client-side messaging.

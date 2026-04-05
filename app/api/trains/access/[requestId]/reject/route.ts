@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { ok, failure } from "@/lib/api/response";
 import { getCurrentSessionUser } from "@/lib/auth/session";
+import { recordOperationalEvent } from "@/services/events/write";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
 import { canUserReviewAccessRequest } from "@/services/trains/access";
 import { FieldValue } from "firebase-admin/firestore";
@@ -50,6 +51,31 @@ export async function POST(
       reviewedBy: user.uid,
       reviewedAt: now,
       rejectionReason: body.reason ?? null
+    });
+
+    const trainDoc = await db.collection("trains").doc(requestData.trainId as string).get();
+    const trainData = trainDoc.data() as Record<string, unknown> | undefined;
+
+    await recordOperationalEvent({
+      category: "access",
+      action: "access-rejected",
+      title: "Access rejected",
+      description: `${user.displayName ?? user.email ?? "Operator"} rejected access for ${String(requestData.userEmail ?? requestData.userId)}.`,
+      trainId: requestData.trainId as string,
+      trainCode: typeof trainData?.code === "string" ? trainData.code : (requestData.trainCode as string | undefined) ?? null,
+      trainLabel:
+        typeof trainData?.label === "string"
+          ? trainData.label
+          : typeof trainData?.code === "string"
+            ? trainData.code
+            : ((requestData.trainCode as string | undefined) ?? null),
+      actorId: user.uid,
+      actorLabel: user.displayName ?? user.email ?? "Operator",
+      actorRole: user.role,
+      metadata: {
+        requestedUserEmail: (requestData.userEmail as string | undefined) ?? null,
+        rejectionReason: body.reason ?? null
+      }
     });
 
     return ok({ success: true });

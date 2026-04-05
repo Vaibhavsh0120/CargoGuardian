@@ -7,10 +7,9 @@ import {
   Bell,
   ChartColumnIncreasing,
   Gauge,
-  History,
   Map,
-  MemoryStick,
   Menu,
+  ShieldCheck,
   TrainFront
 } from "lucide-react";
 
@@ -23,8 +22,7 @@ const icons = {
   map: Map,
   analytics: ChartColumnIncreasing,
   alerts: Bell,
-  history: History,
-  devices: MemoryStick,
+  access: ShieldCheck,
   settings: Menu
 };
 
@@ -42,6 +40,7 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "flex flex-col items-center justify-center rounded-2xl px-2 py-2 text-[10px] font-semibold uppercase tracking-wide transition-colors",
                 active

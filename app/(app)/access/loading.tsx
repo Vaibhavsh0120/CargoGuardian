@@ -1,5 +1,5 @@
 import { LoadingPanel } from "@/components/states/LoadingPanel";
 
-export default function HistoryLoading() {
+export default function AccessLoading() {
   return <LoadingPanel compact />;
 }

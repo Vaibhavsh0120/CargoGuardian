@@ -10,6 +10,7 @@ import {
   normalizeWeightStatus
 } from "@/services/trains/access";
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
+import { applyBlynkConnectionToTrain, getBlynkConnectionOverrides } from "@/services/telemetry/live-status";
 import type { AppUser } from "@/types/user";
 import type {
   CargoType,
@@ -164,11 +165,6 @@ export async function listAccessibleTrains(query: TrainListQuery, user?: AppUser
     }
 
     let ref = db.collection("trains").orderBy(query.sortBy ?? "label", query.sortDir ?? "asc");
-
-    if (query.status) {
-      ref = ref.where("status", "==", query.status);
-    }
-
     ref = ref.limit(query.limit ?? 50);
 
     const snapshot = await ref.get();
@@ -184,6 +180,13 @@ export async function listAccessibleTrains(query: TrainListQuery, user?: AppUser
 
     if (query.search) {
       trains = trains.filter((train) => matchesSearch(train, query.search ?? ""));
+    }
+
+    const connectionOverrides = await getBlynkConnectionOverrides(trains);
+    trains = trains.map((train) => applyBlynkConnectionToTrain(train, connectionOverrides.get(train.id) ?? null));
+
+    if (query.status) {
+      trains = trains.filter((train) => train.status === query.status);
     }
 
     return trains;
@@ -224,7 +227,9 @@ export async function getTrain(trainId: string, user?: AppUser): Promise<Train |
       }
     }
 
-    return mapTrain(doc.id, rawTrain);
+    const train = mapTrain(doc.id, rawTrain);
+    const connectionOverrides = await getBlynkConnectionOverrides([train]);
+    return applyBlynkConnectionToTrain(train, connectionOverrides.get(train.id) ?? null);
   } catch (error) {
     logger.warn(`Failed to get train ${trainId}.`, error);
     return null;
@@ -253,7 +258,7 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
       allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
     }
 
-    const snapshot = await db.collection("trains").select("status", "ownerId").get();
+    const snapshot = await db.collection("trains").select("status", "ownerId", "clearanceStatus", "journeyStage", "blynkAuthToken").get();
     let trains = snapshot.docs.map((doc) => ({
       id: doc.id,
       status: normalizeTrainStatus(doc.data().status),
@@ -271,6 +276,19 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
         trains = trains.filter((train) => workerVisibilityMap.get(train.id) ?? true);
       }
     }
+
+    const connectionOverrides = await getBlynkConnectionOverrides(
+      snapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          blynkAuthToken: getString(doc.data().blynkAuthToken)
+        }))
+        .filter((train) => trains.some((visibleTrain) => visibleTrain.id === train.id))
+    );
+    trains = trains.map((train) => ({
+      ...train,
+      status: connectionOverrides.get(train.id) === false ? "offline" : train.status
+    }));
 
     return {
       totalTrains: trains.length,

@@ -50,15 +50,15 @@ Important semantics:
   - `0` = safe / light off
   - `1` = overweight / device stays on locally
 - Speed is derived in CargoGuardian from GPS history. It is not a primary hardware sensor.
-- Train power/offline state is inferred from reporting freshness. Do not design around a battery model.
+- Train power/offline state is primarily inferred from reporting freshness, but CargoGuardian may also surface a linked train as offline immediately when Blynk reports that hardware disconnected.
 - Demo hardware must follow the same ingest path and field semantics as real hardware.
 
 ## 4. Current State
 
 At the time of this file:
 
-- Phases 1, 2, 3, 4, 5, and 6 are complete.
-- Phase 7 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, 6, and 7 are complete.
+- Phase 8 is the next implementation phase.
 - The repo already contains:
   - Next.js 15 App Router foundation
   - strict TypeScript
@@ -81,6 +81,13 @@ At the time of this file:
   - optional manual MQTT demo simulator only for explicit local fallback testing
   - role-scoped access model
   - request / approve / reject / grant / revoke / delegate APIs
+  - real alerts page and train-scoped alert panels
+  - role-based access workspace with email-driven grant/request/revoke UI
+  - event logging pipeline and recent access/history surfaces on dashboard and train detail
+  - remote and RFID-backed clearance workflows
+  - action-first operations dashboard with role-specific operator views
+  - branded app identity, supplied app icon, and install manifest foundation
+  - targeted live refresh on dashboard, alerts, access, and train detail
 
 ## 5. Read Order Before Any Work
 
@@ -109,7 +116,7 @@ Then inspect the relevant code under:
 - Do not skip phases unless the user explicitly overrides the plan.
 - Do not implement unrelated future features.
 - Do not expose secrets to the client.
-- Route privileged Firebase, Blynk, TigerGraph, and future Mapbox shaping through server-side code.
+- Route privileged Firebase, Blynk, TigerGraph, and future map shaping through server-side code.
 - Do not mix fake data into real UI flows.
 - Demo controls should depend on actual demo-device configuration, not a separate client toggle.
 - Do not show a "demo data" badge or alternate UI mode.
@@ -125,7 +132,7 @@ Frontend:
 - Tailwind CSS
 - TanStack Query
 - Recharts
-- free map tooling only; do not require paid Mapbox access
+- free map tooling only
 
 Backend and integrations:
 
@@ -168,7 +175,7 @@ Primary app routes:
 - `/fleet/[trainId]`
 - `/trains/new`
 - `/alerts`
-- `/history`
+- `/access`
 - `/map`
 - `/analytics`
 - `/settings`
@@ -341,4 +348,4 @@ If one of these fails, the work is not complete.
 
 The next implementation phase is:
 
-- `docs/implementation/phase-07-alerts-history.md`
+- `docs/implementation/phase-08-map.md`

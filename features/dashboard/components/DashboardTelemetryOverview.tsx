@@ -74,15 +74,15 @@ export function DashboardTelemetryOverview({ selectedTrainId }: DashboardTelemet
         <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">Live fleet telemetry</h2>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <SummaryCard label="Fresh" value={summary.freshTrains} icon={Activity} />
         <SummaryCard label="Stale" value={summary.staleTrains} icon={RadioTower} />
         <SummaryCard label="Offline" value={summary.offlineTrains} icon={TrainFront} />
         <SummaryCard label="Moving" value={summary.movingTrains} icon={Gauge} />
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)]">
-        <Card className="border-border/60 bg-card/90 shadow-panel">
+      <div className="grid items-stretch gap-4 xl:grid-cols-2">
+        <Card className="flex h-full flex-col border-border/60 bg-card/90 shadow-panel">
           <CardHeader className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <TelemetryFreshnessBadge
@@ -100,7 +100,7 @@ export function DashboardTelemetryOverview({ selectedTrainId }: DashboardTelemet
               </p>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-3">
+          <CardContent className="grid flex-1 content-start gap-4 sm:grid-cols-3">
             <FocusMetric
               icon={Gauge}
               label="Speed"
@@ -115,12 +115,12 @@ export function DashboardTelemetryOverview({ selectedTrainId }: DashboardTelemet
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/90 shadow-panel">
+        <Card className="flex h-full flex-col border-border/60 bg-card/90 shadow-panel">
           <CardHeader className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Visible trains</p>
             <CardTitle className="font-display text-2xl font-bold tracking-tight">Current fleet feed</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="flex flex-1 flex-col gap-3">
             {snapshots.map((snapshot) => (
               <div
                 key={snapshot.trainId}

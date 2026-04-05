@@ -2,6 +2,7 @@ import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
 
+import { applyTelemetryAlertRules } from "@/services/alerts/rules";
 import { normalizeJourneyStage } from "@/services/trains/access";
 import {
   deriveMovementState,
@@ -9,6 +10,7 @@ import {
   deriveTelemetryTrainStatus,
   deriveWeightStatus,
   getNumber,
+  getString,
   getOptionalIsoString,
   getBoolean,
   normalizeWeightWarningState,
@@ -42,6 +44,7 @@ function mapPreviousTelemetry(raw: RawTelemetryRecord | undefined) {
   }
 
   return {
+    weightKg: getNumber(raw.weightKg),
     gpsLat: getNumber(raw.gpsLat),
     gpsLng: getNumber(raw.gpsLng),
     recordedAt: getOptionalIsoString(raw.createdAt)
@@ -135,6 +138,22 @@ export async function ingestTelemetryFromBlynk(payload: BlynkWebhookPayload): Pr
     journeyStage: deriveJourneyStage(trainData.journeyStage),
     weightStatus,
     updatedAt: now
+  });
+
+  await applyTelemetryAlertRules({
+    train: {
+      id: trainId,
+      code: getString(trainData.code) ?? normalizedCode,
+      label: getString(trainData.label) ?? normalizedCode,
+      journeyStage: deriveJourneyStage(trainData.journeyStage),
+      weightStatus
+    },
+    weightWarningState,
+    weightKg,
+    gpsLat,
+    gpsLng,
+    telemetryReportedAt: receivedAtIso,
+    previousWeightKg: previousCurrent?.weightKg ?? null
   });
 }
 

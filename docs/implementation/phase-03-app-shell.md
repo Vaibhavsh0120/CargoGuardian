@@ -23,12 +23,12 @@ The result should be a stable, navigable application frame that later feature pa
   - Map
   - Analytics
   - Alerts
-  - History
+  - Access
   - Settings
 - Mobile bottom navigation for:
   - Dashboard
   - Fleet
-  - Map
+  - Access
   - Alerts
   - More/Settings
 - Reusable top status bar with:
@@ -109,7 +109,7 @@ These components should become the canonical shell pieces reused across later fe
 - `/map`
 - `/analytics`
 - `/alerts`
-- `/history`
+- `/access`
 - `/settings`
 
 ## Integration Points
@@ -155,6 +155,7 @@ Notable implementation details:
 
 - The protected shell now uses a production-oriented desktop sidebar, mobile bottom navigation, shared top header, and standardized page framing.
 - Route-aware navigation is centralized in `lib/constants/routes.ts`, which now drives both desktop and mobile navigation state.
+- The shell navigation currently uses `/access` in the former sidebar history slot, with no standalone history page in the protected shell anymore.
 - Selected train state is handled by `TrainContextProvider`, fetched from `GET /api/trains`, and persisted in local storage so later train-scoped pages can inherit the same selection.
 - `GET /api/trains` currently returns a minimal selector dataset only. It reads from Firestore and does not branch into a separate demo data path.
 - `GET /api/system/status` was implemented to power shell status badges without exposing server secrets to the client.

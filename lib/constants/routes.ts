@@ -6,7 +6,7 @@ export type AppRouteIconKey =
   | "map"
   | "analytics"
   | "alerts"
-  | "history"
+  | "access"
   | "settings";
 
 export type AppRouteKey = AppRouteIconKey;
@@ -50,11 +50,11 @@ export const appRouteDefinitions: Record<AppRouteKey, AppRouteDefinition> = {
     label: "Alerts",
     icon: "alerts"
   },
-  history: {
-    key: "history",
-    href: "/history",
-    label: "History",
-    icon: "history"
+  access: {
+    key: "access",
+    href: "/access",
+    label: "Access",
+    icon: "access"
   },
   settings: {
     key: "settings",
@@ -71,14 +71,14 @@ export const desktopNavigationItems = [
   appRouteDefinitions.map,
   appRouteDefinitions.analytics,
   appRouteDefinitions.alerts,
-  appRouteDefinitions.history,
+  appRouteDefinitions.access,
   appRouteDefinitions.settings
 ] as const;
 
 export const mobileNavigationItems = [
   appRouteDefinitions.dashboard,
   appRouteDefinitions.fleet,
-  appRouteDefinitions.map,
+  appRouteDefinitions.access,
   appRouteDefinitions.alerts,
   appRouteDefinitions.settings
 ] as const;

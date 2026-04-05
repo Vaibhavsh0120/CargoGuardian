@@ -6,9 +6,9 @@ import {
   Bell,
   ChartColumnIncreasing,
   Gauge,
-  History,
   Map,
   Settings,
+  ShieldCheck,
   TrainFront
 } from "lucide-react";
 
@@ -21,7 +21,7 @@ const icons = {
   map: Map,
   analytics: ChartColumnIncreasing,
   alerts: Bell,
-  history: History,
+  access: ShieldCheck,
   settings: Settings
 };
 
@@ -32,14 +32,12 @@ export function AppSidebar() {
     <aside className="hidden w-80 shrink-0 border-r border-border/70 bg-[linear-gradient(180deg,hsl(var(--surface-low))_0%,hsl(var(--background))_100%)] lg:flex lg:flex-col">
       <div className="border-b border-border/60 px-6 py-7">
         <div className="rounded-[1.75rem] border border-border/60 bg-card/80 p-5 shadow-panel">
-          <p className="font-display text-2xl font-extrabold tracking-tight text-foreground">
-            CargoGuardian
-          </p>
+          <p className="font-display text-2xl font-extrabold tracking-tight text-foreground">CargoGuardian</p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
             Rail operations console
           </p>
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            Dashboard-first monitoring for train health, device readiness, alerts, and route context.
+            Dashboard-first monitoring for train health, access control, alerts, and route context.
           </p>
         </div>
       </div>
@@ -53,6 +51,7 @@ export function AppSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch
               className={cn(
                 "group flex items-center gap-4 rounded-[1.25rem] px-4 py-3.5 text-sm font-semibold transition-all",
                 active
