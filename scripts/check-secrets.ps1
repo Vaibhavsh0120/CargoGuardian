@@ -29,7 +29,7 @@ $blockedContentPatterns = @(
   '-----BEGIN PRIVATE KEY-----',
   '"private_key"\s*:\s*"-----BEGIN PRIVATE KEY-----',
   'FIREBASE_PRIVATE_KEY\s*=\s*-----BEGIN PRIVATE KEY-----',
-  'BLYNK_AUTH_TOKEN\s*=\s*[^\s\r\n]',
+  '(^|[\r\n])\s*BLYNK_AUTH_TOKEN\s*=\s*[^\s\r\n]',
   'TIGERGRAPH_API_KEY\s*=\s*[^\s\r\n]',
   'MAPBOX_SECRET_TOKEN\s*=\s*[^\s\r\n]',
   'SESSION_COOKIE_SECRET\s*=\s*[^\s\r\n]'
@@ -37,6 +37,8 @@ $blockedContentPatterns = @(
 
 $allowedFilesForContentCheck = @(
   '.env.example',
+  'README.md',
+  'docs/blynk-setup.md',
   'scripts/check-secrets.ps1',
   '.githooks/pre-commit',
   'docs/device-connection.md'

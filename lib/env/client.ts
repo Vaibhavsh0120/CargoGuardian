@@ -10,8 +10,7 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: z.string().optional(),
-  NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN: z.string().optional(),
-  NEXT_PUBLIC_DEMO_MODE: z.enum(["true", "false"]).default("false")
+  NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN: z.string().optional()
 });
 
 export function getClientEnv() {
@@ -25,7 +24,6 @@ export function getClientEnv() {
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
     NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
-    NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN,
-    NEXT_PUBLIC_DEMO_MODE: process.env.NEXT_PUBLIC_DEMO_MODE
+    NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN: process.env.NEXT_PUBLIC_MAPBOX_PUBLIC_TOKEN
   });
 }

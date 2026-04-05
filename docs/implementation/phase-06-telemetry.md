@@ -101,3 +101,35 @@ Important:
 ## Hackathon Priority
 
 Critical for demo.
+
+## Implementation Notes
+
+Phase 6 is complete.
+
+Implemented in this phase:
+
+- `GET /api/telemetry/current`
+- `GET /api/telemetry/current/[trainId]`
+- `GET /api/telemetry/history`
+- `GET /api/telemetry/stream/[trainId]`
+- shared telemetry validation and response types
+- shared telemetry derivation helpers for:
+  - freshness / stale / offline state
+  - movement state
+  - derived speed from sequential GPS points
+  - journey-stage display fallback to offline when telemetry is stale
+- dashboard telemetry overview cards using real Firestore-backed current snapshots
+- train-detail telemetry grid, freshness badge, trend chart, and stream-to-polling fallback hooks
+- ingest updates to preserve legacy speed compatibility while storing derived speed and movement state
+
+## Deviations
+
+- The ingest path still accepts legacy `speedKmh`, `errorLed`, and `weightWarningLightColor` fields for compatibility, but the read model now prefers `derivedSpeedKmh` and `weightWarningState`.
+- The correction pass after Phase 6 made webhook ingest more tolerant of string-like Blynk values and added a direct Blynk diagnostic-read path for one train, but it kept the webhook as the primary inbound telemetry architecture.
+- The dashboard telemetry overview focuses on current visible-train telemetry and a selected-train spotlight card instead of replacing the existing fleet summary cards.
+- The demo correction now uses browser-controlled demo publishing for deployed sessions whenever the demo device is configured, so normal demo use no longer needs a separate simulator terminal. The optional local MQTT simulator remains only for explicit fallback testing; CargoGuardian still receives demo telemetry only through the same webhook path as real hardware.
+
+## Deferred Items
+
+- The repo now includes the `telemetry_history` composite index definition for `trainId + createdAt`, but that index still needs to exist in each Firestore environment.
+- Fleet-table telemetry freshness overlays are deferred to a later phase because this phase scoped telemetry UI to dashboard and train detail.

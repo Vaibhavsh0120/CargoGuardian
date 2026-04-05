@@ -4,8 +4,8 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
 
 ## Current Status
 
-- Phases 1, 2, 3, 4, and 5 are complete.
-- Phase 6 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, and 6 are complete.
+- Phase 7 is the next implementation phase.
 - The implemented foundation already includes:
   - email/password and Google auth
   - admin invite flow
@@ -18,8 +18,14 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
   - manual Blynk device linking during train creation
   - role-scoped train access
   - access request, approval, rejection, grant, revoke, and delegate APIs
-  - telemetry ingest endpoint
-  - local simulator that targets one dedicated demo train through the real ingest route
+- telemetry ingest endpoint
+- console-controlled demo publisher for deployed app sessions
+- browser-controlled demo publisher with no separate demo terminal required for normal use
+- optional manual MQTT simulator only for explicit fallback testing
+  - current telemetry APIs and train-scoped history reads
+  - derived speed, freshness, stale, and offline telemetry state
+  - live dashboard telemetry overview
+  - live train-detail telemetry cards, trend chart, and stream fallback
 
 ## Operational Model
 
@@ -55,11 +61,16 @@ Key workflow:
 
 ## How Blynk Connects To CargoGuardian
 
-The connection point is the template webhook.
+CargoGuardian uses Blynk in two directions.
 
-- Blynk device name must match `train.code`
-- the webhook posts template datastream updates to `/api/telemetry/ingest`
-- CargoGuardian resolves the train by code and writes telemetry into Firestore
+- inbound telemetry:
+  - Blynk device name must match `train.code`
+  - the template webhook posts datastream snapshots to `/api/telemetry/ingest`
+  - CargoGuardian resolves the train by code and writes telemetry into Firestore
+- outbound device commands:
+  - CargoGuardian uses the train's stored per-device Blynk Auth Token
+  - server-side Blynk device API writes can update datastreams such as `clearanceLed`
+  - the browser must never call Blynk directly
 
 ## Blynk Configuration
 
@@ -67,27 +78,53 @@ Required server variables:
 
 ```env
 BLYNK_BASE_URL=https://blynk.cloud
+BLYNK_MQTT_URL=
 BLYNK_WEBHOOK_SECRET=
 BLYNK_TEMPLATE_ID=TMPL3TPA6EnbV
 BLYNK_TEMPLATE_NAME=CargoGuardian ESP32
+DEMO_BLYNK_AUTH_TOKEN=
 ```
 
 `BLYNK_AUTH_TOKEN` is no longer part of the server setup. Device Auth Tokens belong to individual Blynk devices and are pasted into CargoGuardian during Add Train.
+`BLYNK_MQTT_URL` is optional and can be used to force the demo simulator to a specific raw Blynk MQTT/TLS endpoint such as `mqtts://ny3.blynk.cloud:8883`.
+
+For diagnostics, CargoGuardian now also exposes an authenticated server route that reads the current Blynk values for one linked train:
+
+```text
+GET /api/trains/[trainId]/blynk/current
+```
+
+This reads Blynk directly with the stored train token and is useful when the webhook path is misconfigured. It does not replace the webhook ingest architecture.
 
 ## Demo Mode Policy
 
-`NEXT_PUBLIC_DEMO_MODE` only controls whether the simulator sends telemetry.
+Demo controls are available when `DEMO_BLYNK_AUTH_TOKEN` is configured on the server.
 
-- `true`: the simulator looks for one train whose code or label contains `DEMO`, generates demo telemetry for it, and posts to `/api/telemetry/ingest`
-- `false`: only real hardware telemetry is shown
+- when configured: the browser exposes demo controls and can trigger server-side demo publishing while the page is open
+- when missing: only real hardware telemetry is shown
+
+The Blynk template webhook remains the only ingest path into CargoGuardian, including for demo publishing.
+The demo Blynk device still has to follow the same normal rule as any real device: its device name must equal the target `train.code`.
+The deployed demo publisher opens a short raw Blynk MQTT/TLS device session on each tick so the demo device behaves more like real hardware and can appear online in Blynk while running.
+The MQTT publisher now follows Blynk redirect instructions and logs broker-level failures, but deployed environments can still require an explicit regional `BLYNK_MQTT_URL` if the default global broker host is not stable for that runtime.
+Demo publishing is stopped by default on page load. It starts only after `start` and stops after `stop` or when the page session ends.
 
 The UI must not switch to fake train lists, fake counts, or special demo-only presentation.
 
-In demo mode, logged-in users can control the demo train warning state from the browser console with:
+When the demo device is configured, logged-in users can control demo publishing from the browser console with:
+
+Type these directly in the browser console:
 
 ```js
-window.cgDemo.setWeightWarningState(-1 | 0 | 1)
+start
+stop
+under
+safe
+over
+status
 ```
+
+The `window.demo(...)` commands still work, but the short aliases are the intended console controls.
 
 ## Map Policy
 
@@ -107,7 +144,18 @@ npm install
 npm run dev
 ```
 
-To run the simulator manually:
+Normal demo usage does not need a separate simulator terminal. Open the app, then use the browser console commands:
+
+```js
+start
+stop
+under
+safe
+over
+status
+```
+
+Only if you explicitly want the old standalone simulator path:
 
 ```bash
 npm run simulate:devices
@@ -120,6 +168,12 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+## Firestore Indexes
+
+The repo now includes the required composite index definition for telemetry history in [firestore.indexes.json](./firestore.indexes.json).
+
+Create that Firestore index in your project so `telemetry_history` queries on `trainId + createdAt` do not fall back to slower unordered scans.
 
 ## Planning Docs
 

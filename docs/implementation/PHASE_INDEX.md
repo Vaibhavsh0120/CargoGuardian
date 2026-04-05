@@ -2,13 +2,15 @@
 
 CargoGuardian is being built in controlled phases. Each phase must leave the app runnable and consistent with the operational model.
 
-Phases 1 through 5 are complete.
+Phases 1 through 6 are complete.
 
 Important architecture decisions already locked in:
 
 - Train = Device
 - no separate `devices` collection
-- `NEXT_PUBLIC_DEMO_MODE` only toggles the simulator
+- demo controls depend on configured demo-device credentials
+- the demo simulator publishes to one configured Blynk device and reaches CargoGuardian only through the normal webhook path
+- Blynk webhooks remain the primary inbound telemetry path, while outbound device commands should use server-side Blynk device API writes with the stored train token
 - worker visibility is pre-clearance only
 - masters can review worker access requests for trains they manage
 
@@ -19,7 +21,7 @@ Important architecture decisions already locked in:
 3. Phase 3 - App Shell and Navigation `(completed)`
 4. Phase 4 - Fleet and Train Management `(completed)`
 5. Phase 5 - Device Pairing and Hardware Management `(completed)`
-6. Phase 6 - Telemetry and Real-Time Updates
+6. Phase 6 - Telemetry and Real-Time Updates `(completed)`
 7. Phase 7 - Alerts, Clearance, and Event History
 8. Phase 8 - Map Integration
 9. Phase 9 - Analytics Integration
@@ -34,7 +36,7 @@ Important architecture decisions already locked in:
 | 3 - App Shell and Navigation | Completed | Desktop/mobile shell, train selector, loading and error states |
 | 4 - Fleet and Train Management | Completed | Fleet list, train detail, Add Train, role-scoped access model |
 | 5 - Device Pairing and Hardware Management | Completed | Manual Blynk device linking, ingest route, simulator |
-| 6 - Telemetry and Real-Time Updates | Pending | Current telemetry APIs, derived operational state, live telemetry UI |
+| 6 - Telemetry and Real-Time Updates | Completed | Current telemetry APIs, derived speed/freshness, live dashboard and train-detail telemetry UI |
 | 7 - Alerts, Clearance, and Event History | Pending | Alert rules, request inbox UI, clearance actions, history timeline |
 | 8 - Map Integration | Pending | Live train map, route overlays, incident-location support |
 | 9 - Analytics Integration | Pending | TigerGraph insights, risk scoring, cached analytics views |
@@ -88,4 +90,4 @@ A phase is complete only when:
 
 The next implementation phase is:
 
-- [phase-06-telemetry.md](./phase-06-telemetry.md)
+- [phase-07-alerts-history.md](./phase-07-alerts-history.md)

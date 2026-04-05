@@ -32,10 +32,21 @@ export function AuthStatusControls({ compact }: Readonly<{ compact?: boolean }>)
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
           {initials || "CG"}
         </div>
-        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={handleLogout} disabled={isLoggingOut} title="Sign out">
+        <div className="min-w-0 text-right">
+          <p className="max-w-36 truncate text-sm font-semibold text-foreground">{identity}</p>
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{roleLabels[user.role]}</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          title="Sign out"
+        >
           <LogOut className="h-3.5 w-3.5" />
         </Button>
       </div>

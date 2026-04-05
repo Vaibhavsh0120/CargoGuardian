@@ -8,8 +8,11 @@ import {
   ArrowRight,
   Bell,
   ChartColumnIncreasing,
+  ChevronRight,
+  ClipboardList,
   Map,
   Plus,
+  ShieldCheck,
   TrainFront,
   Wifi,
   WifiOff
@@ -25,9 +28,10 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/features/auth/hooks/useSession";
+import { DashboardTelemetryOverview } from "@/features/dashboard/components/DashboardTelemetryOverview";
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { appRouteDefinitions } from "@/lib/constants/routes";
-import { trainStatusLabels, type TrainSummary } from "@/types/train";
+import { trainStatusLabels, type TrainSelectorItem, type TrainSummary } from "@/types/train";
 
 type DashboardSummaryResponse = {
   summary: TrainSummary;
@@ -36,7 +40,9 @@ type DashboardSummaryResponse = {
 
 async function fetchDashboardSummary(): Promise<DashboardSummaryResponse> {
   const response = await fetch("/api/dashboard/summary", { cache: "no-store" });
-  if (!response.ok) throw new Error("Failed to load dashboard summary.");
+  if (!response.ok) {
+    throw new Error("Failed to load dashboard summary.");
+  }
   return response.json() as Promise<DashboardSummaryResponse>;
 }
 
@@ -130,12 +136,7 @@ export default function DashboardPage() {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <SummaryCard
-              label="Total"
-              value={summary?.totalTrains}
-              icon={TrainFront}
-              loading={summaryQuery.isLoading}
-            />
+            <SummaryCard label="Total" value={summary?.totalTrains} icon={TrainFront} loading={summaryQuery.isLoading} />
             <SummaryCard
               label="Active"
               value={summary?.activeTrains}
@@ -166,64 +167,139 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-            <Card className="border-white/70 bg-card/90 shadow-panel">
-              <CardHeader className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge variant="secondary">Train context ready</Badge>
-                  {selectedTrain ? <Badge>{trainStatusLabels[selectedTrain.status]}</Badge> : null}
-                </div>
-                <div className="space-y-2">
-                  <CardTitle className="font-display text-3xl">
-                    {selectedTrain ? selectedTrain.label : "Select a train"}
-                  </CardTitle>
-                  <CardDescription className="max-w-2xl text-sm">
-                    {selectedTrain
-                      ? `${selectedTrain.code}${selectedTrain.routeName ? ` | ${selectedTrain.routeName}` : ""}`
-                      : "Use the selector to focus the dashboard on one train at a time."}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {selectedTrain ? (
-                  <Link
-                    href={`/fleet/${selectedTrain.id}` as Route}
-                    className={buttonVariants({ variant: "outline" })}
-                  >
-                    View train details
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                ) : null}
-              </CardContent>
-            </Card>
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-              {quickLinks.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link key={link.href} href={link.href}>
-                    <Card className="h-full border-white/70 bg-card/90 shadow-panel transition-transform hover:-translate-y-0.5">
-                      <CardHeader className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                            <Icon className="h-5 w-5" />
-                          </span>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="space-y-2">
-                          <CardTitle className="font-display text-xl">{link.title}</CardTitle>
-                          <CardDescription>{link.description}</CardDescription>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+            <SelectedTrainPanel
+              selectedTrain={selectedTrain}
+              visibleTrainCount={trains.length}
+              summaryLoading={summaryQuery.isLoading}
+            />
+            <OperationsShortcuts />
           </div>
+
+          <DashboardTelemetryOverview selectedTrainId={selectedTrain?.id ?? null} />
         </>
       )}
     </div>
+  );
+}
+
+function SelectedTrainPanel({
+  selectedTrain,
+  visibleTrainCount,
+  summaryLoading
+}: {
+  selectedTrain: TrainSelectorItem | null;
+  visibleTrainCount: number;
+  summaryLoading: boolean;
+}) {
+  return (
+    <Card className="flex h-full flex-col border-border/60 bg-card/90 shadow-panel">
+      <CardHeader className="space-y-4 pb-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="secondary">Selected train</Badge>
+          {selectedTrain ? <Badge>{trainStatusLabels[selectedTrain.status]}</Badge> : null}
+          <Badge variant="outline">{summaryLoading ? "Syncing summary" : `${visibleTrainCount} visible trains`}</Badge>
+        </div>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <CardTitle className="font-display text-2xl sm:text-3xl">
+              {selectedTrain ? selectedTrain.label : "Select a train"}
+            </CardTitle>
+            <CardDescription className="max-w-2xl text-sm">
+              {selectedTrain
+                ? "Use this train as the current operations focus for telemetry review, clearance, and movement tracking."
+                : "Pick one train from the top selector to make the dashboard focus more useful."}
+            </CardDescription>
+          </div>
+          {selectedTrain ? (
+            <Link href={`/fleet/${selectedTrain.id}` as Route} className={buttonVariants()}>
+              View train details
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          ) : (
+            <Link href={appRouteDefinitions.fleet.href} className={buttonVariants({ variant: "outline" })}>
+              Open fleet
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="flex flex-1 flex-col gap-4">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <ContextMetric label="Train code" value={selectedTrain?.code ?? "Not selected"} icon={TrainFront} />
+          <ContextMetric
+            label="Status"
+            value={selectedTrain ? trainStatusLabels[selectedTrain.status] : "Pending"}
+            icon={ShieldCheck}
+          />
+          <ContextMetric label="Route" value={selectedTrain?.routeName ?? "Not assigned"} icon={Map} />
+          <ContextMetric label="Workspace" value={`${visibleTrainCount} visible`} icon={ClipboardList} />
+        </div>
+
+        <div className="mt-auto rounded-3xl border border-border/60 bg-background/60 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                Current focus
+              </p>
+              <p className="font-display text-lg font-bold text-foreground">
+                {selectedTrain ? `${selectedTrain.label} is pinned for dashboard context.` : "No train is pinned yet."}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {selectedTrain
+                  ? "Telemetry cards, freshness state, and drill-down actions should be read against this train first."
+                  : "Choose a train from the top selector so the operations dashboard can focus on one active context."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {selectedTrain ? (
+                <Link href={`/fleet/${selectedTrain.id}` as Route} className={buttonVariants({ variant: "outline" })}>
+                  Open focused train
+                </Link>
+              ) : null}
+              <Link href={appRouteDefinitions.fleet.href} className={buttonVariants({ variant: "ghost" })}>
+                Fleet list
+              </Link>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function OperationsShortcuts() {
+  return (
+    <Card className="border-border/60 bg-card/90 shadow-panel">
+      <CardHeader className="space-y-2 pb-4">
+        <Badge variant="outline" className="w-fit">
+          Command deck
+        </Badge>
+        <CardTitle className="font-display text-2xl">Operations shortcuts</CardTitle>
+        <CardDescription>Keep the most common fleet actions one click away from the dashboard.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2">
+        {quickLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <Link key={link.href} href={link.href}>
+              <div className="group h-full rounded-3xl border border-border/60 bg-background/60 p-4 transition hover:-translate-y-0.5 hover:border-border hover:bg-background/80">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:text-foreground" />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="font-display text-lg font-bold text-foreground">{link.title}</p>
+                  <p className="text-sm text-muted-foreground">{link.description}</p>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -267,5 +343,25 @@ function SummaryCard({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ContextMetric({
+  label,
+  value,
+  icon: Icon
+}: {
+  label: string;
+  value: string;
+  icon: ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </div>
+      <p className="font-display text-lg font-bold text-foreground">{value}</p>
+    </div>
   );
 }

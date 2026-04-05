@@ -57,8 +57,8 @@ Important semantics:
 
 At the time of this file:
 
-- Phases 1, 2, 3, 4, and 5 are complete.
-- Phase 6 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, and 6 are complete.
+- Phase 7 is the next implementation phase.
 - The repo already contains:
   - Next.js 15 App Router foundation
   - strict TypeScript
@@ -71,7 +71,14 @@ At the time of this file:
   - manual Blynk device linking during train creation
   - Auth Token stored on the train after linking
   - telemetry ingest endpoint
-  - simulator targeting one dedicated demo train through the same ingest route
+  - current telemetry read APIs
+  - telemetry history reads
+  - derived speed / freshness / offline telemetry logic
+  - dashboard telemetry overview
+  - train-detail telemetry cards and trend chart
+  - console-controlled demo publisher for deployed app sessions
+  - browser-controlled demo publisher with no separate demo terminal required for normal use
+  - optional manual MQTT demo simulator only for explicit local fallback testing
   - role-scoped access model
   - request / approve / reject / grant / revoke / delegate APIs
 
@@ -104,7 +111,7 @@ Then inspect the relevant code under:
 - Do not expose secrets to the client.
 - Route privileged Firebase, Blynk, TigerGraph, and future Mapbox shaping through server-side code.
 - Do not mix fake data into real UI flows.
-- `NEXT_PUBLIC_DEMO_MODE` only controls whether the simulator sends telemetry.
+- Demo controls should depend on actual demo-device configuration, not a separate client toggle.
 - Do not show a "demo data" badge or alternate UI mode.
 - If architecture changes, update docs in the same turn.
 
@@ -262,6 +269,8 @@ Blynk:
 - Ingest resolves trains by `train.code`.
 - The Blynk device name must match the train code.
 - Device Auth Tokens are per-device and are stored on the train during Add Train.
+- Inbound telemetry should use the webhook path; CargoGuardian should not replace that with general polling from Blynk.
+- Outbound device commands should use the stored per-device Auth Token from server-side code.
 
 Map provider policy:
 
@@ -285,12 +294,13 @@ TigerGraph:
 
 The demo must look like the real product.
 
-- `NEXT_PUBLIC_DEMO_MODE=true` only starts the telemetry simulator.
-- The simulator should target exactly one train whose code or label contains `DEMO`.
-- The simulator reads that train record only to know which train code to target.
+- Demo controls should be available when the demo device is configured.
+- The simulator should behave like one configured hardware device, not a special train selector.
 - The simulator must generate its own demo telemetry values.
-- In demo mode, the browser may expose a console helper that writes simulator control state through server APIs.
-- The simulator writes through the real ingest route.
+- When the demo device is configured, the browser may expose a console helper that writes simulator control state through server APIs.
+- The deployed app demo publisher is stopped by default and starts only when a page session explicitly triggers it.
+- The deployed app demo publisher writes to Blynk using a dedicated demo device Auth Token and reaches CargoGuardian only through the existing Blynk webhook.
+- The demo Blynk device name must still match the normal `train.code` rule.
 - The UI must not branch to fake train lists, fake dashboard counts, or fake cards.
 - Do not add a demo banner, demo badge, or alternate screen copy.
 
@@ -331,4 +341,4 @@ If one of these fails, the work is not complete.
 
 The next implementation phase is:
 
-- `docs/implementation/phase-06-telemetry.md`
+- `docs/implementation/phase-07-alerts-history.md`

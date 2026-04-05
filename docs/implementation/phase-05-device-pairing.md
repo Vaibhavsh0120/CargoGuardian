@@ -74,7 +74,7 @@ Future phases must assume:
 - Add Train links the device, it does not create it
 - the Blynk device name must equal the train code
 - the template webhook is the connection point between Blynk and CargoGuardian
-- demo mode should target exactly one demo train whose code or label contains `DEMO`
+- the demo device should target exactly one configured Blynk device and follow the same normal `train.code` name-matching rule
 
 ## Deferred
 

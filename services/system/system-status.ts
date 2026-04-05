@@ -1,6 +1,5 @@
 import "server-only";
 
-import { getClientEnv } from "@/lib/env/client";
 import { getServerEnv } from "@/lib/env/server";
 import { hasFirebaseAdminCredentials } from "@/services/firebase/admin";
 
@@ -20,9 +19,8 @@ export type SystemStatusSummary = {
 };
 
 export function getSystemStatusSummary(): SystemStatusSummary {
-  const clientEnv = getClientEnv();
   const serverEnv = getServerEnv();
-  const demoMode = clientEnv.NEXT_PUBLIC_DEMO_MODE === "true";
+  const demoMode = Boolean(serverEnv.DEMO_BLYNK_AUTH_TOKEN);
   const firebaseConfigured = Boolean(serverEnv.FIREBASE_PROJECT_ID);
   const adminReady = hasFirebaseAdminCredentials();
 
@@ -47,7 +45,7 @@ export function getSystemStatusSummary(): SystemStatusSummary {
       key: "mode",
       label: "Mode",
       level: demoMode ? "demo" : "healthy",
-      detail: demoMode ? "Demo simulator enabled" : "Live integration path"
+      detail: demoMode ? "Demo controls enabled" : "Live integration path"
     }
   ];
 

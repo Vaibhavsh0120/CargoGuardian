@@ -3,13 +3,7 @@ import { join } from "node:path";
 
 import { cert, getApp, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-
-type TrainTarget = {
-  id: string;
-  code: string;
-  label: string;
-  blynkAuthToken: string | null;
-};
+import mqtt, { type IClientOptions, type MqttClient } from "mqtt";
 
 type SimulationState = {
   weightKg: number;
@@ -44,7 +38,7 @@ const SCENARIOS: Array<Omit<SimulationState, "rfidLastScan" | "rfidLastTag" | "l
     clearanceLed: false,
     weightWarningState: 0,
     trainPower: true,
-    signalStrength: 86,
+    signalStrength: -48,
     moving: false,
     routeProgress: 0
   },
@@ -56,7 +50,7 @@ const SCENARIOS: Array<Omit<SimulationState, "rfidLastScan" | "rfidLastTag" | "l
     clearanceLed: true,
     weightWarningState: -1,
     trainPower: true,
-    signalStrength: 74,
+    signalStrength: -61,
     moving: true,
     routeProgress: 34
   },
@@ -68,7 +62,7 @@ const SCENARIOS: Array<Omit<SimulationState, "rfidLastScan" | "rfidLastTag" | "l
     clearanceLed: false,
     weightWarningState: 0,
     trainPower: false,
-    signalStrength: 0,
+    signalStrength: -110,
     moving: false,
     routeProgress: 0
   },
@@ -80,7 +74,7 @@ const SCENARIOS: Array<Omit<SimulationState, "rfidLastScan" | "rfidLastTag" | "l
     clearanceLed: true,
     weightWarningState: 1,
     trainPower: true,
-    signalStrength: 92,
+    signalStrength: -43,
     moving: true,
     routeProgress: 58
   },
@@ -92,11 +86,14 @@ const SCENARIOS: Array<Omit<SimulationState, "rfidLastScan" | "rfidLastTag" | "l
     clearanceLed: false,
     weightWarningState: -1,
     trainPower: true,
-    signalStrength: 42,
+    signalStrength: -76,
     moving: false,
     routeProgress: 81
   }
 ];
+
+const MQTT_KEEPALIVE_SECONDS = 45;
+const MQTT_INFO_VERSION = "demo-sim-1.0.0";
 
 function loadLocalEnv() {
   for (const filename of [".env.local", ".env"]) {
@@ -128,8 +125,25 @@ function loadLocalEnv() {
   }
 }
 
-function getAppUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+function getDemoBlynkAuthToken() {
+  const authToken = process.env.DEMO_BLYNK_AUTH_TOKEN?.trim();
+
+  if (!authToken) {
+    throw new Error("DEMO_BLYNK_AUTH_TOKEN must be configured for the demo simulator.");
+  }
+
+  return authToken;
+}
+
+function getInitialMqttUrl() {
+  const explicitUrl = process.env.BLYNK_MQTT_URL?.trim();
+  if (explicitUrl) {
+    return explicitUrl;
+  }
+
+  const baseUrl = process.env.BLYNK_BASE_URL || "https://blynk.cloud";
+  const parsed = new URL(baseUrl);
+  return `mqtts://${parsed.hostname}:8883`;
 }
 
 function getDb() {
@@ -157,23 +171,6 @@ function getDb() {
       : initializeApp({ projectId });
 
   return getFirestore(app);
-}
-
-async function listTrains(): Promise<TrainTarget[]> {
-  const snapshot = await getDb().collection("trains").orderBy("label").limit(25).get();
-  const trains = snapshot.docs.map((doc) => {
-    const data = doc.data() as Record<string, unknown>;
-
-    return {
-      id: doc.id,
-      code: typeof data.code === "string" ? data.code : doc.id.toUpperCase(),
-      label: typeof data.label === "string" ? data.label : doc.id,
-      blynkAuthToken: typeof data.blynkAuthToken === "string" ? data.blynkAuthToken : null
-    };
-  });
-
-  const demoTrain = trains.find((train) => /demo/i.test(`${train.code} ${train.label}`));
-  return demoTrain ? [demoTrain] : [];
 }
 
 async function readDemoWeightWarningState(): Promise<-1 | 0 | 1 | null> {
@@ -205,26 +202,31 @@ function addNoise(value: number, variance: number) {
   return value + (Math.random() - 0.5) * variance;
 }
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function updateState(state: SimulationState, index: number) {
   const route = ROUTES[index % ROUTES.length];
 
   if (!state.trainPower) {
     state.speedKmh = 0;
-    state.signalStrength = 0;
+    state.signalStrength = -110;
     return;
   }
 
   if (state.moving) {
-    state.routeProgress = Math.min(100, state.routeProgress + 0.45 + Math.random() * 0.35);
+    state.routeProgress = Math.min(100, state.routeProgress + 2.2 + Math.random() * 1.1);
     state.gpsLat = lerp(route.startLat, route.endLat, state.routeProgress / 100);
     state.gpsLng = lerp(route.startLng, route.endLng, state.routeProgress / 100);
     state.speedKmh = Math.max(0, Math.round(addNoise(85, 18)));
-    state.signalStrength = Math.min(100, Math.max(28, Math.round(addNoise(state.signalStrength, 6))));
-    state.weightKg = Math.max(0, Math.round(addNoise(state.weightKg, 45)));
+    state.signalStrength = Math.round(clamp(addNoise(state.signalStrength, 5), -95, -40));
+    state.weightKg = Math.max(0, Math.round(addNoise(state.weightKg, 180)));
 
     if (state.routeProgress >= 100) {
-      state.moving = false;
-      state.speedKmh = 0;
+      state.routeProgress = 0;
+      state.gpsLat = route.startLat;
+      state.gpsLng = route.startLng;
     }
 
     const now = Date.now();
@@ -236,13 +238,13 @@ function updateState(state: SimulationState, index: number) {
     }
   } else {
     state.speedKmh = 0;
-    state.signalStrength = Math.min(100, Math.max(45, Math.round(addNoise(state.signalStrength, 3))));
-    state.weightKg = Math.max(0, Math.round(addNoise(state.weightKg, 10)));
+    state.signalStrength = Math.round(clamp(addNoise(state.signalStrength, 3), -85, -45));
+    state.weightKg = Math.max(0, Math.round(addNoise(state.weightKg, 60)));
   }
 
   if (index % SCENARIOS.length === 4) {
     state.weightWarningState = Math.random() > 0.65 ? 1 : -1;
-    state.signalStrength = Math.min(60, Math.max(20, Math.round(addNoise(state.signalStrength, 10))));
+    state.signalStrength = Math.round(clamp(addNoise(state.signalStrength, 6), -95, -55));
   }
 }
 
@@ -266,85 +268,173 @@ function applyDemoControlState(state: SimulationState, override: -1 | 0 | 1 | nu
   state.weightKg = Math.max(10000, Math.round(addNoise(12500, 35)));
 }
 
-async function sendTelemetry(train: TrainTarget, state: SimulationState) {
-  const response = await fetch(`${getAppUrl()}/api/telemetry/ingest`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(process.env.BLYNK_WEBHOOK_SECRET ? { Authorization: `Bearer ${process.env.BLYNK_WEBHOOK_SECRET}` } : {})
-    },
-    body: JSON.stringify({
-      deviceId: train.code,
+class BlynkDeviceSession {
+  private client: MqttClient | null = null;
+  private endpoint = getInitialMqttUrl();
+  private readyResolve: (() => void) | null = null;
+  private readyPromise: Promise<void> = Promise.resolve();
+  private redirectedEndpoint: string | null = null;
+  private infoPublished = false;
+
+  constructor() {
+    this.resetReadyPromise();
+  }
+
+  async start() {
+    await this.connect(this.endpoint);
+    await this.waitUntilReady();
+  }
+
+  async publishState(state: SimulationState) {
+    await this.waitUntilReady();
+
+    const client = this.client;
+    if (!client) {
+      throw new Error("Blynk MQTT client is not connected.");
+    }
+
+    const payload = JSON.stringify({
       weightKg: state.weightKg,
-      gpsLat: state.gpsLat,
-      gpsLng: state.gpsLng,
-      speedKmh: state.speedKmh,
-      clearanceLed: state.clearanceLed,
+      gpsLat: Number(state.gpsLat.toFixed(6)),
+      gpsLng: Number(state.gpsLng.toFixed(6)),
+      clearanceLed: state.clearanceLed ? 1 : 0,
       weightWarningState: state.weightWarningState,
-      rfidLastScan: state.rfidLastScan,
-      rfidLastTag: state.rfidLastTag,
-      trainPower: state.trainPower,
+      rfidLastScan: state.rfidLastScan ?? "",
+      rfidLastTag: state.rfidLastTag ?? "",
       signalStrength: state.signalStrength
-    })
-  });
+    });
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(error?.error ?? `Telemetry request failed with status ${response.status}.`);
-  }
-}
-
-async function syncBlynkDatastreams(train: TrainTarget, state: SimulationState) {
-  if (!train.blynkAuthToken) {
-    return;
+    await this.publish("batch_ds", payload);
   }
 
-  const params = new URLSearchParams({
-    token: train.blynkAuthToken,
-    v0: String(state.weightKg),
-    v1: String(state.gpsLat),
-    v2: String(state.gpsLng),
-    v3: state.clearanceLed ? "1" : "0",
-    v4: String(state.weightWarningState),
-    v5: state.rfidLastScan ?? "",
-    v6: state.rfidLastTag ?? "",
-    v7: String(state.signalStrength)
-  });
+  private async connect(endpoint: string) {
+    if (this.client) {
+      await new Promise<void>((resolve) => {
+        this.client?.end(true, {}, () => resolve());
+      });
+      this.client = null;
+    }
 
-  const baseUrl = process.env.BLYNK_BASE_URL || "https://blynk.cloud";
-  const response = await fetch(`${baseUrl}/external/api/batch/update?${params.toString()}`, {
-    method: "GET"
-  });
+    this.resetReadyPromise();
 
-  if (!response.ok) {
-    throw new Error(`Blynk sync failed with status ${response.status}.`);
+    const options: IClientOptions = {
+      username: "device",
+      password: getDemoBlynkAuthToken(),
+      keepalive: MQTT_KEEPALIVE_SECONDS,
+      clean: true,
+      reconnectPeriod: 5000,
+      connectTimeout: 10000,
+      clientId: `cg-demo-${Math.random().toString(16).slice(2, 10)}`
+    };
+
+    const client = mqtt.connect(endpoint, options);
+    this.client = client;
+    this.endpoint = endpoint;
+    this.infoPublished = false;
+
+    client.on("connect", () => {
+      console.log(`[sim] Connected to Blynk MQTT broker: ${this.endpoint}`);
+      client.subscribe("downlink/#", (error) => {
+        if (error) {
+          console.log(`[sim] Failed to subscribe to downlink/#: ${error.message}`);
+          return;
+        }
+
+        void this.publishInfo().then(() => {
+          if (this.readyResolve) {
+            this.readyResolve();
+            this.readyResolve = null;
+          }
+        });
+      });
+    });
+
+    client.on("reconnect", () => {
+      console.log(`[sim] Reconnecting to Blynk MQTT broker: ${this.endpoint}`);
+    });
+
+    client.on("close", () => {
+      console.log("[sim] Blynk MQTT connection closed.");
+    });
+
+    client.on("error", (error) => {
+      console.log(`[sim] Blynk MQTT error: ${error.message}`);
+    });
+
+    client.on("message", (topic, payloadBuffer) => {
+      const payload = payloadBuffer.toString();
+
+      if (topic === "downlink/redirect") {
+        const redirectedEndpoint = payload.trim();
+        if (redirectedEndpoint && redirectedEndpoint !== this.endpoint && redirectedEndpoint !== this.redirectedEndpoint) {
+          this.redirectedEndpoint = redirectedEndpoint;
+          console.log(`[sim] Blynk requested redirect to ${redirectedEndpoint}`);
+          void this.connect(redirectedEndpoint).catch((error) => {
+            console.log(`[sim] Redirect connect failed: ${error instanceof Error ? error.message : String(error)}`);
+          });
+        }
+      }
+    });
+  }
+
+  private async publishInfo() {
+    if (this.infoPublished) {
+      return;
+    }
+
+    const infoPayload = JSON.stringify({
+      tmpl: process.env.BLYNK_TEMPLATE_ID ?? "unknown-template",
+      ver: MQTT_INFO_VERSION,
+      build: "demo-simulator",
+      type: process.env.BLYNK_TEMPLATE_ID ?? "demo-simulator",
+      rxbuff: 2048
+    });
+
+    await this.publish("info/mcu", infoPayload);
+    this.infoPublished = true;
+  }
+
+  private async publish(topic: string, payload: string) {
+    const client = this.client;
+    if (!client) {
+      throw new Error("Blynk MQTT client is not connected.");
+    }
+
+    await new Promise<void>((resolve, reject) => {
+      client.publish(topic, payload, { qos: 0 }, (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  private waitUntilReady() {
+    return this.readyPromise;
+  }
+
+  private resetReadyPromise() {
+    this.readyPromise = new Promise<void>((resolve) => {
+      this.readyResolve = resolve;
+    });
   }
 }
 
 async function main() {
   loadLocalEnv();
 
-  if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") {
-    console.log("Demo mode is disabled. Set NEXT_PUBLIC_DEMO_MODE=true to run the simulator.");
-    return;
-  }
-
   console.log("Starting demo train telemetry simulator...");
-  console.log(`Target: ${getAppUrl()}`);
+  console.log(`Target Blynk MQTT URL: ${getInitialMqttUrl()}`);
+  console.log("The simulator now behaves like a real device session using Blynk Device MQTT API.");
+  console.log("CargoGuardian will receive telemetry only if the Blynk device name matches an existing train code.");
 
-  const trains = await listTrains();
+  const session = new BlynkDeviceSession();
+  await session.start();
 
-  if (!trains.length) {
-    console.log('No demo train found. Create one train whose code or label contains "DEMO" before starting the simulator.');
-    return;
-  }
-
-  const simulations = trains.map((train, index) => ({
-    train,
-    state: createInitialState(index)
-  }));
-
-  console.log(`Loaded demo train: ${simulations[0]?.train.code ?? "unknown"}`);
+  const state = createInitialState(1);
   console.log("Sending telemetry every 5 seconds. Press Ctrl+C to stop.");
 
   let tick = 0;
@@ -353,18 +443,14 @@ async function main() {
     tick += 1;
     const overrideState = await readDemoWeightWarningState().catch(() => null);
 
-    for (const [index, entry] of simulations.entries()) {
-      updateState(entry.state, index);
-      applyDemoControlState(entry.state, overrideState);
-      void sendTelemetry(entry.train, entry.state).catch((error) => {
-        console.log(`Telemetry failed for ${entry.train.code}: ${error instanceof Error ? error.message : String(error)}`);
-      });
-      void syncBlynkDatastreams(entry.train, entry.state).catch((error) => {
-        console.log(`Blynk sync failed for ${entry.train.code}: ${error instanceof Error ? error.message : String(error)}`);
-      });
-    }
+    updateState(state, 0);
+    applyDemoControlState(state, overrideState);
 
-    console.log(`[${new Date().toISOString()}] Tick ${tick} | demo train updated`);
+    void session.publishState(state).then(() => {
+      console.log(`[${new Date().toISOString()}] Tick ${tick} | demo train published to Blynk MQTT`);
+    }).catch((error) => {
+      console.log(`[sim] Blynk publish failed: ${error instanceof Error ? error.message : String(error)}`);
+    });
   }, 5000);
 }
 

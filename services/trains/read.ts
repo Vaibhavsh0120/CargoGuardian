@@ -12,28 +12,23 @@ import {
 import { getFirebaseAdminDb } from "@/services/firebase/admin";
 import type { AppUser } from "@/types/user";
 import type {
+  CargoType,
   Train,
   TrainListItem,
-  TrainStatus,
-  TrainSummary,
-  CargoType,
   TrainSelectorItem,
-  TrainSelectorResponse
+  TrainSelectorResponse,
+  TrainStatus,
+  TrainSummary
 } from "@/types/train";
 
-// ── Raw Firestore record ─────────────────────────────────────────────
-
 type RawTrainRecord = Record<string, unknown>;
-
-// ── Normalization helpers ────────────────────────────────────────────
 
 function getString(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
 }
 
 function getNumber(value: unknown): number | null {
-  if (typeof value === "number" && !Number.isNaN(value)) return value;
-  return null;
+  return typeof value === "number" && !Number.isNaN(value) ? value : null;
 }
 
 function getOptionalIsoString(value: unknown): string | null {
@@ -68,6 +63,7 @@ function normalizeCargoType(value: unknown): CargoType {
     "intermodal",
     "other"
   ];
+
   return valid.includes(value as CargoType) ? (value as CargoType) : "general";
 }
 
@@ -142,21 +138,19 @@ function trainToSelectorItem(train: Train): TrainSelectorItem {
   };
 }
 
-function applySearchFilter(items: TrainListItem[], search: string): TrainListItem[] {
-  const q = search.toLowerCase();
-  return items.filter(
-    (t) =>
-      t.label.toLowerCase().includes(q) ||
-      t.code.toLowerCase().includes(q) ||
-      (t.origin?.toLowerCase().includes(q) ?? false) ||
-      (t.destination?.toLowerCase().includes(q) ?? false) ||
-      (t.routeName?.toLowerCase().includes(q) ?? false)
+function matchesSearch(train: Train, search: string) {
+  const query = search.toLowerCase();
+
+  return (
+    train.label.toLowerCase().includes(query) ||
+    train.code.toLowerCase().includes(query) ||
+    (train.origin?.toLowerCase().includes(query) ?? false) ||
+    (train.destination?.toLowerCase().includes(query) ?? false) ||
+    (train.routeName?.toLowerCase().includes(query) ?? false)
   );
 }
 
-// ── List trains ──────────────────────────────────────────────────────
-
-export async function listTrains(query: TrainListQuery, user?: AppUser): Promise<TrainListItem[]> {
+export async function listAccessibleTrains(query: TrainListQuery, user?: AppUser): Promise<Train[]> {
   if (!process.env.FIREBASE_PROJECT_ID) {
     return [];
   }
@@ -164,8 +158,7 @@ export async function listTrains(query: TrainListQuery, user?: AppUser): Promise
   try {
     const db = getFirebaseAdminDb();
 
-    // 1. Resolve permitted train IDs if it's a restricted user.
-    let allowedTrainIds: string[] | null = null; // null means 'allow all' (admin)
+    let allowedTrainIds: string[] | null = null;
     if (user && user.role !== "admin") {
       allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
     }
@@ -177,31 +170,33 @@ export async function listTrains(query: TrainListQuery, user?: AppUser): Promise
     }
 
     ref = ref.limit(query.limit ?? 50);
+
     const snapshot = await ref.get();
-    
-    // 2. Fetch and conditionally filter by assignments or ownership
     let trains = snapshot.docs.map((doc) => mapTrain(doc.id, doc.data()));
+
     if (user && allowedTrainIds !== null) {
-      trains = trains.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
+      trains = trains.filter((train) => train.ownerId === user.uid || allowedTrainIds.includes(train.id));
+
       if (user.role === "worker") {
         trains = trains.filter((train) => canWorkerViewTrain(train as unknown as RawTrainRecord));
       }
     }
 
-    const items = trains.map(trainToListItem);
-
     if (query.search) {
-      return applySearchFilter(items, query.search);
+      trains = trains.filter((train) => matchesSearch(train, query.search ?? ""));
     }
 
-    return items;
+    return trains;
   } catch (error) {
-    logger.warn("Failed to list trains.", error);
+    logger.warn("Failed to list accessible trains.", error);
     return [];
   }
 }
 
-// ── Get single train ─────────────────────────────────────────────────
+export async function listTrains(query: TrainListQuery, user?: AppUser): Promise<TrainListItem[]> {
+  const trains = await listAccessibleTrains(query, user);
+  return trains.map(trainToListItem);
+}
 
 export async function getTrain(trainId: string, user?: AppUser): Promise<Train | null> {
   if (!process.env.FIREBASE_PROJECT_ID) {
@@ -217,7 +212,7 @@ export async function getTrain(trainId: string, user?: AppUser): Promise<Train |
     }
 
     const rawTrain = doc.data() as RawTrainRecord;
-    
+
     if (user && user.role !== "admin" && rawTrain.ownerId !== user.uid) {
       const hasAssignment = (await listActiveAssignedTrainIds(db, user.uid)).includes(trainId);
       if (!hasAssignment) {
@@ -235,8 +230,6 @@ export async function getTrain(trainId: string, user?: AppUser): Promise<Train |
     return null;
   }
 }
-
-// ── Train summary ────────────────────────────────────────────────────
 
 export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
   const empty: TrainSummary = {
@@ -268,7 +261,8 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
     }));
 
     if (user && allowedTrainIds !== null) {
-      trains = trains.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
+      trains = trains.filter((train) => train.ownerId === user.uid || allowedTrainIds.includes(train.id));
+
       if (user.role === "worker") {
         const trainsSnapshot = await db.collection("trains").select("clearanceStatus", "journeyStage").get();
         const workerVisibilityMap = new Map(
@@ -280,19 +274,17 @@ export async function getTrainSummary(user?: AppUser): Promise<TrainSummary> {
 
     return {
       totalTrains: trains.length,
-      activeTrains: trains.filter((t) => t.status === "active").length,
-      idleTrains: trains.filter((t) => t.status === "idle").length,
-      warningTrains: trains.filter((t) => t.status === "warning").length,
-      criticalTrains: trains.filter((t) => t.status === "critical").length,
-      offlineTrains: trains.filter((t) => t.status === "offline").length
+      activeTrains: trains.filter((train) => train.status === "active").length,
+      idleTrains: trains.filter((train) => train.status === "idle").length,
+      warningTrains: trains.filter((train) => train.status === "warning").length,
+      criticalTrains: trains.filter((train) => train.status === "critical").length,
+      offlineTrains: trains.filter((train) => train.status === "offline").length
     };
   } catch (error) {
     logger.warn("Failed to compute train summary.", error);
     return empty;
   }
 }
-
-// ── Train selector (replaces old train-selector.ts) ──────────────────
 
 export async function listTrainSelectorItems(user?: AppUser): Promise<TrainSelectorResponse> {
   const fetchedAt = new Date().toISOString();
@@ -302,30 +294,17 @@ export async function listTrainSelectorItems(user?: AppUser): Promise<TrainSelec
   }
 
   try {
-    const db = getFirebaseAdminDb();
-    
-    // 1. Resolve permitted train IDs
-    let allowedTrainIds: string[] | null = null;
-    if (user && user.role !== "admin") {
-      allowedTrainIds = await listActiveAssignedTrainIds(db, user.uid);
-    }
-
-    const snapshot = await db.collection("trains").limit(50).get();
-    let trainsRaw = snapshot.docs.map((doc) => mapTrain(doc.id, doc.data()));
-    
-    if (user && allowedTrainIds !== null) {
-      trainsRaw = trainsRaw.filter(t => t.ownerId === user.uid || allowedTrainIds.includes(t.id));
-      if (user.role === "worker") {
-        trainsRaw = trainsRaw.filter((train) => canWorkerViewTrain(train as unknown as RawTrainRecord));
-      }
-    }
-    
-    const trains = trainsRaw
-      .map(trainToSelectorItem)
-      .sort((a, b) => a.label.localeCompare(b.label));
+    const trains = await listAccessibleTrains(
+      {
+        limit: 50,
+        sortBy: "label",
+        sortDir: "asc"
+      },
+      user
+    );
 
     return {
-      trains,
+      trains: trains.map(trainToSelectorItem).sort((a, b) => a.label.localeCompare(b.label)),
       source: trains.length ? "firestore" : "empty",
       fetchedAt
     };

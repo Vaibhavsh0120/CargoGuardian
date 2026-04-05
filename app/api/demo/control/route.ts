@@ -3,17 +3,29 @@ import { z } from "zod";
 import { failure, ok } from "@/lib/api/response";
 import { getCurrentSessionUser } from "@/lib/auth/session";
 import {
-  getDemoWeightWarningState,
+  getDemoControlState,
+  startDemoSimulation,
+  stopDemoSimulation,
   setDemoWeightWarningState,
   type DemoWeightWarningState
 } from "@/services/demo/control";
 
-const demoControlSchema = z.object({
-  weightWarningState: z.union([z.literal(-1), z.literal(0), z.literal(1)])
-});
+export const runtime = "nodejs";
+
+const demoControlSchema = z.union([
+  z.object({
+    command: z.literal("start")
+  }),
+  z.object({
+    command: z.literal("stop")
+  }),
+  z.object({
+    weightWarningState: z.union([z.literal(-1), z.literal(0), z.literal(1)])
+  })
+]);
 
 function ensureDemoModeEnabled() {
-  return process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+  return Boolean(process.env.DEMO_BLYNK_AUTH_TOKEN);
 }
 
 export async function GET() {
@@ -24,11 +36,11 @@ export async function GET() {
   }
 
   if (!ensureDemoModeEnabled()) {
-    return failure("Demo mode is disabled.", 409);
+    return failure("Demo device is not configured.", 409);
   }
 
-  const weightWarningState = await getDemoWeightWarningState();
-  return ok({ weightWarningState });
+  const control = await getDemoControlState();
+  return ok(control);
 }
 
 export async function POST(request: Request) {
@@ -39,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   if (!ensureDemoModeEnabled()) {
-    return failure("Demo mode is disabled.", 409);
+    return failure("Demo device is not configured.", 409);
   }
 
   let body: unknown;
@@ -51,7 +63,24 @@ export async function POST(request: Request) {
 
   const parsed = demoControlSchema.safeParse(body);
   if (!parsed.success) {
-    return failure("weightWarningState must be -1, 0, or 1.", 422);
+    return failure("Use command start/stop or weightWarningState -1/0/1.", 422);
+  }
+
+  if ("command" in parsed.data) {
+    if (parsed.data.command === "start") {
+      await startDemoSimulation(user);
+      return ok({
+        runtimeStatus: "running",
+        weightWarningState: 0,
+        message: "Demo simulation started."
+      });
+    }
+
+    await stopDemoSimulation(user);
+    return ok({
+      runtimeStatus: "stopped",
+      message: "Demo simulation stopped."
+    });
   }
 
   await setDemoWeightWarningState(parsed.data.weightWarningState as DemoWeightWarningState, user);

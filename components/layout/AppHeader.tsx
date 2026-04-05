@@ -20,7 +20,7 @@ export function AppHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/90 px-4 backdrop-blur-xl">
       <CompactTrainSelector />
       <div className="ml-auto">
         <AuthStatusControls compact />
@@ -64,7 +64,7 @@ function CompactTrainSelector() {
       <select
         value={selectedTrainId ?? ""}
         onChange={(event) => setSelectedTrainId(event.target.value || null)}
-        className="h-7 rounded-md border border-border/60 bg-transparent px-2 text-sm font-medium text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        className="h-8 max-w-[14rem] rounded-md border border-border/60 bg-transparent px-2 text-sm font-medium text-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring sm:max-w-[18rem]"
       >
         {trains.map((train) => (
           <option key={train.id} value={train.id}>

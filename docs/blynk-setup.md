@@ -16,9 +16,11 @@ Set these on your local machine and on Vercel:
 
 ```env
 BLYNK_BASE_URL=https://blynk.cloud
+BLYNK_MQTT_URL=
 BLYNK_WEBHOOK_SECRET=
 BLYNK_TEMPLATE_ID=TMPL3TPA6EnbV
 BLYNK_TEMPLATE_NAME=CargoGuardian ESP32
+DEMO_BLYNK_AUTH_TOKEN=
 ```
 
 Important:
@@ -26,6 +28,8 @@ Important:
 - `BLYNK_WEBHOOK_SECRET` is your own secret between Blynk webhook and CargoGuardian
 - `BLYNK_AUTH_TOKEN` is not a server env var anymore
 - each Blynk device has its own Auth Token
+- `DEMO_BLYNK_AUTH_TOKEN` is only for the local demo simulator and should be the Auth Token of the dedicated demo Blynk device
+- `BLYNK_MQTT_URL` is optional and only needed if you want to force the simulator to a specific raw Blynk MQTT/TLS broker such as `mqtts://ny3.blynk.cloud:8883` instead of the default derived from `BLYNK_BASE_URL`
 
 ## 2. Create The Template
 
@@ -64,7 +68,8 @@ In Blynk Developer Zone:
 1. click `Create New Webhook`
 2. Trigger Event: `Template Datastream update`
 3. Template: `CargoGuardian ESP32`
-4. Datastream: `weightKg`
+4. Datastream: pick one important datastream
+   recommended: create one webhook per datastream and reuse the same body
 5. Method: `POST`
 6. URL:
 
@@ -82,14 +87,14 @@ https://YOUR_DOMAIN/api/telemetry/ingest
 ```json
 {
   "deviceId": "{device_name}",
-  "weightKg": {device_dataStream_V0},
-  "gpsLat": {device_dataStream_V1},
-  "gpsLng": {device_dataStream_V2},
-  "clearanceLed": {device_dataStream_V3},
-  "weightWarningState": {device_dataStream_V4},
+  "weightKg": "{device_dataStream_V0}",
+  "gpsLat": "{device_dataStream_V1}",
+  "gpsLng": "{device_dataStream_V2}",
+  "clearanceLed": "{device_dataStream_V3}",
+  "weightWarningState": "{device_dataStream_V4}",
   "rfidLastScan": "{device_dataStream_V5}",
   "rfidLastTag": "{device_dataStream_V6}",
-  "signalStrength": {device_dataStream_V7}
+  "signalStrength": "{device_dataStream_V7}"
 }
 ```
 
@@ -98,6 +103,34 @@ How this works:
 - Blynk sends `device_name`
 - CargoGuardian matches that to `train.code`
 - so the Blynk device name must exactly match the train code
+
+Recommended trigger coverage:
+
+- `weightKg`
+- `gpsLat`
+- `gpsLng`
+- `clearanceLed`
+- `weightWarningState`
+- `rfidLastScan`
+- `rfidLastTag`
+- `signalStrength`
+
+Each webhook can point to the same URL and send the same full body.
+
+Why the numeric placeholders are quoted:
+
+- it keeps the payload valid JSON even when a datastream is blank during testing
+- CargoGuardian will coerce number-like and boolean-like strings on ingest
+
+Common reasons "Test Webhook" fails:
+
+- wrong `Authorization` header or secret mismatch
+- wrong deployment URL
+- the endpoint returns `404` because `device_name` does not match a train code
+- a referenced datastream has no value and an unquoted placeholder breaks the JSON body
+- the datastream type in Blynk does not match the actual value format
+
+Being online is necessary for real datastream updates, but not enough by itself to make the test pass. A bad payload or a rejected endpoint will still fail.
 
 ## 4. Create A Real Train Device In Blynk
 
@@ -127,6 +160,7 @@ Now:
 - Blynk knows the device
 - CargoGuardian knows the train
 - the webhook can land telemetry on the correct train
+- CargoGuardian can also send direct server-side device commands back to Blynk with that stored Auth Token
 
 ## 6. Flash The ESP32
 
@@ -138,71 +172,102 @@ That token is what connects the real hardware to the Blynk device you created.
 
 Keep one dedicated demo train only.
 
-Recommended naming:
+Recommended setup:
 
-- Blynk device name: `CG-DEMO-01`
-- CargoGuardian train code: `CG-DEMO-01`
-- CargoGuardian train name: `Demo Train`
+- choose one dedicated Blynk device for the simulator
+- make that Blynk device name exactly equal to the CargoGuardian train code
+- use that device's Auth Token as `DEMO_BLYNK_AUTH_TOKEN`
 
 Steps:
 
 1. create one Blynk device from the same template
-2. name it `CG-DEMO-01`
+2. name it exactly equal to the CargoGuardian train code you want to use
 3. copy its Auth Token
-4. add a train in CargoGuardian with code `CG-DEMO-01`
+4. add the same train in CargoGuardian with the same code
 5. paste that Auth Token into Add Train
-6. keep `NEXT_PUBLIC_DEMO_MODE=true`
+6. set `DEMO_BLYNK_AUTH_TOKEN` in CargoGuardian
 
-The simulator looks up the one train whose code or label contains `DEMO` and sends telemetry to that train only.
+The deployed app does not auto-start demo publishing. It exposes browser console controls that start and stop a demo publisher for the current page session. For normal demo use, no separate simulator terminal is needed.
 
 Important:
 
 - it does not read telemetry values from Firestore
-- it only reads the train record once so it knows which train code to target
 - it then generates simulated GPS, weight, RFID, and warning-state values itself
-- if the demo train has a saved Blynk Auth Token, the simulator also mirrors those demo values into the Blynk datastreams
+- it publishes those demo values into Blynk using `DEMO_BLYNK_AUTH_TOKEN`
+- in the deployed app, each tick uses a short raw Blynk MQTT/TLS device session so the demo device behaves closer to real hardware and can appear online while running
+- the MQTT publisher now follows Blynk redirect instructions, but some deployments can still need an explicit regional `BLYNK_MQTT_URL`
+- CargoGuardian then receives the demo telemetry back through the same Blynk webhook path as a real ESP32
+- CargoGuardian will only match that telemetry if the Blynk device name equals an existing `train.code`
+- the deployed app starts in `stop` state by default
+- demo publishing runs only while an open page session has started it
 
-## 8. Demo Simulator Behavior
+## 8. Direct Device Diagnostics
 
-When demo mode is on:
+CargoGuardian now has a direct Blynk diagnostic read path:
 
-- the simulator keeps working even if the real ESP32 is offline
+```text
+GET /api/trains/[trainId]/blynk/current
+```
+
+This route:
+
+- checks whether the device is connected in Blynk
+- reads the current datastream values directly from Blynk
+- uses the train's stored per-device Auth Token on the server
+
+Use it for debugging when the webhook is failing. Keep webhook as the main inbound telemetry path.
+
+## 9. Demo Simulator Behavior
+
+When the demo device is configured and you start it from the browser console:
+
+- the demo publisher keeps working while that page session stays open
 - it sends random but realistic telemetry for the dedicated demo train
 - it simulates movement using GPS coordinates
 - it sends the same field names as the real device
-- it can mirror the same values into the demo device in Blynk
+- it pushes the same values into the demo device in Blynk
+- CargoGuardian reads that demo telemetry only after Blynk calls the webhook
 - it uses `weightWarningState` with:
   - `-1` underweight
   - `0` safe
   - `1` overweight
+- when the page session ends, publishing stops because there are no more tick requests
 
-## 9. Demo Control From Browser Console
+## 10. Demo Control From Browser Console
 
-When `NEXT_PUBLIC_DEMO_MODE=true`, any logged-in admin, master, or worker can control the demo train from the browser console.
+When the demo device is configured, any logged-in admin, master, or worker can control the demo train from the browser console.
 
 Use:
 
 ```js
-window.cgDemo.setWeightWarningState(-1)
-window.cgDemo.setWeightWarningState(0)
-window.cgDemo.setWeightWarningState(1)
+start
+stop
+under
+safe
+over
+status
 ```
 
 Meaning:
 
-- `-1` sets the demo train to underweight
-- `0` sets the demo train to safe
-- `1` sets the demo train to overweight
+- `start` starts demo publishing and resets the device to normal
+- `stop` stops demo publishing
+- `under` sets the demo train to underweight
+- `safe` sets the demo train to safe
+- `over` sets the demo train to overweight
+- `status` asks CargoGuardian for the current demo runtime state
 
 How it works:
 
 - the browser sends the selected state to CargoGuardian
 - CargoGuardian stores that demo-control value on the server
-- the simulator reads that value and applies it to the demo train
-- the simulator keeps generating GPS movement and the rest of the demo telemetry
-- if the demo train has a Blynk Auth Token, the simulator also mirrors the values into Blynk datastreams
+- while the page session is started, the browser triggers server-side demo ticks
+- each tick generates GPS movement and the rest of the demo telemetry
+- each tick publishes those values into Blynk with `DEMO_BLYNK_AUTH_TOKEN`
+- CargoGuardian receives the resulting telemetry through the Blynk webhook
 
 Important:
 
-- typing bare `0`, `-1`, or `1` in the browser console does nothing by itself
-- use `window.cgDemo.setWeightWarningState(...)`
+- use the short aliases above
+- the older `window.demo(...)` commands still work
+- the deployed app demo publisher is different from the optional local `npm run simulate:devices` MQTT simulator

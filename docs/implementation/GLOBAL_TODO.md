@@ -8,7 +8,9 @@ This file tracks cross-phase remaining work and product constraints.
 - No fake dashboard counts
 - No separate demo data path
 - No demo badge or demo banner in the UI
-- `NEXT_PUBLIC_DEMO_MODE` only turns the simulator on or off
+- Demo controls should depend on configured demo-device credentials, not a separate client toggle
+- The simulator writes only to Blynk and reaches CargoGuardian only through the normal webhook path
+- The demo device still follows the same normal rule as real hardware: Blynk device name must equal `train.code`
 
 ## Locked Hardware Model
 
@@ -59,10 +61,6 @@ Train documents must carry at least:
 
 ## Remaining Core Work
 
-- Build current telemetry read APIs.
-- Derive speed from GPS history instead of treating it as a primary hardware field.
-- Build train-detail telemetry cards and dashboard telemetry overview.
-- Build freshness and offline handling.
 - Build clearance actions and history recording.
 - Build access request review UI for admins and masters.
 - Build alert rules for:
@@ -78,7 +76,8 @@ Train documents must carry at least:
 ## Documentation Work
 
 - Keep Blynk setup docs aligned with the real payload model.
-- Add Firebase setup guide.
+- Document the recommended per-datastream webhook trigger coverage and the direct Blynk diagnostic route.
+- Add backend setup guide for auth credentials and Firestore project configuration.
 - Add Firestore indexes/rules guide.
 - Add TigerGraph setup guide.
 - Add Vercel deployment guide.
@@ -88,4 +87,3 @@ Train documents must carry at least:
 - `CreateTrainInput` and `CreateTrainPayload` are still maintained separately.
 - Telemetry payload compatibility currently tolerates legacy `errorLed` and `weightWarningLightColor` aliases; real hardware should use `weightWarningState`.
 - Access-control UI is not built yet even though the APIs exist.
-- Phase 6 should centralize telemetry derivation helpers rather than scattering logic.

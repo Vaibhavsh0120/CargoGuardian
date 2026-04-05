@@ -5,3 +5,4 @@ export type Placeholder = {
 export * from "@/types/train";
 export * from "@/types/route";
 export * from "@/types/user";
+export * from "@/types/telemetry";
