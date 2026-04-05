@@ -139,14 +139,14 @@ Compatibility note:
 ```json
 {
   "deviceId": "{device_name}",
-  "weightKg": "{device_dataStream_V0}",
-  "gpsLat": "{device_dataStream_V1}",
-  "gpsLng": "{device_dataStream_V2}",
-  "clearanceLed": "{device_dataStream_V3}",
-  "weightWarningState": "{device_dataStream_V4}",
-  "rfidLastScan": "{device_dataStream_V5}",
-  "rfidLastTag": "{device_dataStream_V6}",
-  "signalStrength": "{device_dataStream_V7}"
+  "weightKg": "{device_dataStream_1}",
+  "gpsLat": "{device_dataStream_2}",
+  "gpsLng": "{device_dataStream_3}",
+  "clearanceLed": "{device_dataStream_4}",
+  "weightWarningState": "{device_dataStream_5}",
+  "rfidLastScan": "{device_dataStream_6}",
+  "rfidLastTag": "{device_dataStream_7}",
+  "signalStrength": "{device_dataStream_8}"
 }
 ```
 
@@ -173,12 +173,19 @@ Recommended webhook setup:
 - each webhook can send the same full JSON body above to `/api/telemetry/ingest`
 - this avoids a design where CargoGuardian only updates when `V0` changes
 
+Free-plan fallback:
+
+- keep one webhook only
+- trigger it from a frequently changing datastream such as `weightKg`
+- send the full snapshot using `device_dataStream_<datastreamId>` placeholders
+- this works as long as the trigger datastream updates often enough for your demo
+
 Common webhook failure reasons:
 
 - `Authorization` header does not exactly match `BLYNK_WEBHOOK_SECRET`
 - the webhook URL points to the wrong deployment domain
 - the Blynk device name does not exactly match CargoGuardian `train.code`
-- one or more unquoted numeric placeholders are empty, which breaks JSON
+- the datastream identifiers in `device_dataStream_X` do not match the real Blynk datastream ids
 - the train exists in Blynk but not in CargoGuardian
 - the device has never written the datastream values being referenced
 

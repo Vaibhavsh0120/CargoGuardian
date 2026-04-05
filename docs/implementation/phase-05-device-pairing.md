@@ -10,7 +10,7 @@ The final Phase 5 workflow is the free-plan Blynk workflow:
 - Blynk device is created manually in Blynk Console from the shared template
 - Add Train links that Blynk device to CargoGuardian
 - telemetry enters through `/api/telemetry/ingest`
-- the simulator uses the same ingest route
+- demo publishing reaches CargoGuardian through the same Blynk webhook and ingest route
 
 ## Delivered
 
@@ -29,7 +29,8 @@ The final Phase 5 workflow is the free-plan Blynk workflow:
   - `firmware`
   - `lastSeen`
 - telemetry ingest foundation
-- local simulator that targets one dedicated demo train code
+- browser-controlled demo publisher for deployed sessions
+- optional local MQTT simulator for explicit fallback testing
 
 ## Required Operator Workflow
 
@@ -75,6 +76,7 @@ Future phases must assume:
 - the Blynk device name must equal the train code
 - the template webhook is the connection point between Blynk and CargoGuardian
 - the demo device should target exactly one configured Blynk device and follow the same normal `train.code` name-matching rule
+- normal demo use should not require a separate simulator terminal
 
 ## Deferred
 

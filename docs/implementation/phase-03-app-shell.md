@@ -34,7 +34,7 @@ The result should be a stable, navigable application frame that later feature pa
 - Reusable top status bar with:
   - search placeholder or command surface
   - system status badges
-  - session/operator area
+  - session/user area
 - page container that standardizes spacing across routes
 - route-level loading boundaries for core app pages
 - selected train state holder for Dashboard and later detail pages

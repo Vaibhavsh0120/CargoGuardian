@@ -4,7 +4,7 @@
 
 This phase adds real authentication and session management on top of the Phase 1 foundation. The app already has placeholder auth routes and a protected-shell layout placeholder, but those routes are not functional. This phase converts the placeholders into a working Firebase Auth system with server-managed sessions, route protection, and role-aware user loading.
 
-The result of this phase should be that an operator can log in, maintain a session across refreshes, and be redirected correctly between auth routes and the protected application shell.
+The result of this phase should be that a user can log in, maintain a session across refreshes, and be redirected correctly between auth routes and the protected application shell.
 
 ## Objectives
 
@@ -12,7 +12,7 @@ The result of this phase should be that an operator can log in, maintain a sessi
 - Add Firebase Auth integration for browser-side credential handling.
 - Add secure server-side session cookies for protected routes.
 - Protect `(app)` routes using middleware and server validation.
-- Create the initial `users` Firestore profile shape for authenticated operators.
+- Create the initial `users` Firestore profile shape for authenticated users.
 - Prepare role-based authorization foundations for later phases.
 
 ## Required Features
@@ -23,7 +23,7 @@ The result of this phase should be that an operator can log in, maintain a sessi
 - Session restore on reload.
 - Redirect unauthenticated users away from `/dashboard` and other app routes.
 - Redirect authenticated users away from `/login` and `/signup`.
-- Viewer/operator/admin role loading, even if Phase 2 only uses it minimally.
+- `not-set`, `worker`, `master`, and `admin` role loading, even if Phase 2 only uses it minimally.
 - Basic auth error messages for invalid credentials and account setup issues.
 
 ## Files To Create
@@ -101,7 +101,7 @@ The result of this phase should be that an operator can log in, maintain a sessi
   - revoke or clear session
 - User profile service
   - create `users/{userId}` profile document
-  - load role and operator metadata
+  - load role and user metadata
 
 ## Data Flow
 
@@ -189,5 +189,5 @@ Validation completed:
 Follow-up deferred to later phases:
 
 - expand Firestore-backed user profiles beyond the initial auth fields so Settings and role management do not rely only on auth defaults
-- add explicit admin, operator, and viewer management workflows once the management surfaces exist
+- add explicit admin, master, and worker management workflows once the management surfaces exist
 - if mobile redirect-based auth is needed later, add a Google redirect fallback alongside the popup flow

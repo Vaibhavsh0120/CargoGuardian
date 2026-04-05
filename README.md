@@ -18,14 +18,14 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
   - manual Blynk device linking during train creation
   - role-scoped train access
   - access request, approval, rejection, grant, revoke, and delegate APIs
-- telemetry ingest endpoint
-- console-controlled demo publisher for deployed app sessions
-- browser-controlled demo publisher with no separate demo terminal required for normal use
-- optional manual MQTT simulator only for explicit fallback testing
   - current telemetry APIs and train-scoped history reads
   - derived speed, freshness, stale, and offline telemetry state
   - live dashboard telemetry overview
   - live train-detail telemetry cards, trend chart, and stream fallback
+  - telemetry ingest endpoint
+  - console-controlled demo publisher for deployed app sessions
+  - browser-controlled demo publisher with no separate demo terminal required for normal use
+  - optional manual MQTT simulator only for explicit fallback testing
 
 ## Operational Model
 
@@ -181,6 +181,7 @@ Create that Firestore index in your project so `telemetry_history` queries on `t
 - [Phase Index](./docs/implementation/PHASE_INDEX.md)
 - [How To Continue](./docs/implementation/HOW_TO_CONTINUE.md)
 - [Global TODO](./docs/implementation/GLOBAL_TODO.md)
+- [Phase 1 - Project Initialization](./docs/implementation/phase-01-project-initialization.md)
 
 ## Supporting Docs
 

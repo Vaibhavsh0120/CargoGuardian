@@ -68,8 +68,9 @@ In Blynk Developer Zone:
 1. click `Create New Webhook`
 2. Trigger Event: `Template Datastream update`
 3. Template: `CargoGuardian ESP32`
-4. Datastream: pick one important datastream
-   recommended: create one webhook per datastream and reuse the same body
+4. Datastream:
+   - if your Blynk plan allows multiple webhooks, create one webhook per important datastream and reuse the same body
+   - if your Blynk plan allows only one webhook, trigger it from a frequently updated datastream such as `weightKg`
 5. Method: `POST`
 6. URL:
 
@@ -87,14 +88,14 @@ https://YOUR_DOMAIN/api/telemetry/ingest
 ```json
 {
   "deviceId": "{device_name}",
-  "weightKg": "{device_dataStream_V0}",
-  "gpsLat": "{device_dataStream_V1}",
-  "gpsLng": "{device_dataStream_V2}",
-  "clearanceLed": "{device_dataStream_V3}",
-  "weightWarningState": "{device_dataStream_V4}",
-  "rfidLastScan": "{device_dataStream_V5}",
-  "rfidLastTag": "{device_dataStream_V6}",
-  "signalStrength": "{device_dataStream_V7}"
+  "weightKg": "{device_dataStream_1}",
+  "gpsLat": "{device_dataStream_2}",
+  "gpsLng": "{device_dataStream_3}",
+  "clearanceLed": "{device_dataStream_4}",
+  "weightWarningState": "{device_dataStream_5}",
+  "rfidLastScan": "{device_dataStream_6}",
+  "rfidLastTag": "{device_dataStream_7}",
+  "signalStrength": "{device_dataStream_8}"
 }
 ```
 
@@ -102,20 +103,19 @@ How this works:
 
 - Blynk sends `device_name`
 - CargoGuardian matches that to `train.code`
+- `device_dataStream_X` uses the datastream identifier, not the pin name
+- on free Blynk, one webhook can still send the full telemetry snapshot when it is triggered by a frequently updated datastream such as `weightKg`
 - so the Blynk device name must exactly match the train code
 
 Recommended trigger coverage:
 
-- `weightKg`
-- `gpsLat`
-- `gpsLng`
-- `clearanceLed`
-- `weightWarningState`
-- `rfidLastScan`
-- `rfidLastTag`
-- `signalStrength`
-
-Each webhook can point to the same URL and send the same full body.
+- paid-plan recommendation:
+  - create one webhook per important datastream
+  - each webhook can point to the same URL and send the same full body
+- free-plan workaround:
+  - create one webhook only
+  - trigger it from a frequently changing datastream such as `weightKg`
+  - send the full snapshot using `device_dataStream_<datastreamId>` placeholders
 
 Why the numeric placeholders are quoted:
 
@@ -127,7 +127,7 @@ Common reasons "Test Webhook" fails:
 - wrong `Authorization` header or secret mismatch
 - wrong deployment URL
 - the endpoint returns `404` because `device_name` does not match a train code
-- a referenced datastream has no value and an unquoted placeholder breaks the JSON body
+- the datastream identifiers in `device_dataStream_X` do not match the real Blynk datastream ids
 - the datastream type in Blynk does not match the actual value format
 
 Being online is necessary for real datastream updates, but not enough by itself to make the test pass. A bad payload or a rejected endpoint will still fail.

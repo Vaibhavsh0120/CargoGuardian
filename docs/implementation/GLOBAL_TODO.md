@@ -76,7 +76,6 @@ Train documents must carry at least:
 ## Documentation Work
 
 - Keep Blynk setup docs aligned with the real payload model.
-- Document the recommended per-datastream webhook trigger coverage and the direct Blynk diagnostic route.
 - Add backend setup guide for auth credentials and Firestore project configuration.
 - Add Firestore indexes/rules guide.
 - Add TigerGraph setup guide.
