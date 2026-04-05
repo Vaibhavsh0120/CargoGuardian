@@ -7,6 +7,7 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
 - Phases 1, 2, 3, 4, 5, 6, and 7 are complete.
 - Phase 8 is the next implementation phase.
 - The implemented foundation already includes:
+  - public landing page at `/` with login and signup entry points for unauthenticated visitors
   - email/password and Google auth
   - admin invite flow
   - worker/master onboarding
@@ -66,6 +67,7 @@ Key workflow:
 
 ## Authentication Model
 
+- The public `/` route is the CargoGuardian landing page and redirects authenticated operators to `/dashboard` or `/onboarding` as needed.
 - Normal signup supports email/password and Google.
 - Normal signup creates a Firestore user profile with role `not-set`.
 - Users with role `not-set` are redirected to `/onboarding` and cannot access protected app routes or APIs until they choose `worker` or `master`.

@@ -45,8 +45,43 @@ const config: Config = {
         "surface-panel": "hsl(var(--surface-panel))"
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
-        display: ["var(--font-manrope)", "sans-serif"]
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "\"SF Pro Text\"",
+          "\"SF Pro Display\"",
+          "\"Segoe UI\"",
+          "system-ui",
+          "sans-serif"
+        ],
+        display: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "\"SF Pro Display\"",
+          "\"SF Pro Text\"",
+          "\"Segoe UI\"",
+          "system-ui",
+          "sans-serif"
+        ],
+        editorial: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "\"SF Pro Display\"",
+          "\"SF Pro Text\"",
+          "\"Segoe UI\"",
+          "system-ui",
+          "sans-serif"
+        ],
+        landing: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "\"SF Pro Text\"",
+          "\"SF Pro Display\"",
+          "\"Segoe UI\"",
+          "system-ui",
+          "sans-serif"
+        ],
+        mono: ["ui-monospace", "\"SF Mono\"", "SFMono-Regular", "Menlo", "monospace"]
       },
       borderRadius: {
         lg: "var(--radius-lg)",
