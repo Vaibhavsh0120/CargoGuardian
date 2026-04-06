@@ -77,16 +77,28 @@ const statusToneClasses: Record<TrainStatus, string> = {
 };
 
 async function fetchAccessWorkspace(): Promise<AccessWorkspaceResponse> {
-  const response = await fetch("/api/trains/access/workspace", {
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch("/api/trains/access/workspace", {
+      cache: "no-store"
+    });
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new Error(error?.error ?? "Failed to load access workspace.");
+    if (!response.ok) {
+      const error = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(error?.error ?? `Failed to load access workspace (${response.status}).`);
+    }
+
+    const data = await response.json() as AccessWorkspaceResponse;
+    
+    // Validate required fields
+    if (!data || typeof data !== "object") {
+      throw new Error("Invalid response format from access workspace API.");
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("[v0] Access workspace fetch error:", error);
+    throw error;
   }
-
-  return response.json() as Promise<AccessWorkspaceResponse>;
 }
 
 async function postJson<T>(url: string, body?: unknown): Promise<T> {

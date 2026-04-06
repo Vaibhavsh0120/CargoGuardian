@@ -11,7 +11,6 @@ import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingPanel } from "@/components/states/LoadingPanel";
 import { buttonVariants } from "@/components/ui/button";
 import { useSession } from "@/features/auth/hooks/useSession";
-import { DashboardTelemetryOverview } from "@/features/dashboard/components/DashboardTelemetryOverview";
 import { OperationsBoard } from "@/features/dashboard/components/OperationsBoard";
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { useLiveRefresh } from "@/hooks/useLiveRefresh";
@@ -69,15 +68,13 @@ export default function DashboardPage() {
 
   const canCreateTrain = sessionQuery.data?.user?.role === "admin";
   const userRole = sessionQuery.data?.user?.role ?? "worker";
-  const dashboardCopy = getDashboardCopy(userRole, selectedTrain?.label ?? null, selectedTrain?.code ?? null);
-  const showTelemetryOverview = userRole !== "worker" && trains.length > 0;
+  const dashboardCopy = getDashboardCopy(userRole);
 
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow={dashboardCopy.eyebrow}
         title={dashboardCopy.title}
-        description={dashboardCopy.description}
         actions={
           canCreateTrain ? (
             <Link href={"/trains/new" as Route} prefetch className={buttonVariants()}>
@@ -104,51 +101,36 @@ export default function DashboardPage() {
         <LoadingPanel />
       ) : operationsQuery.isError || !operationsQuery.data ? (
         <ErrorState
-          title="Operational dashboard is unavailable"
-          description="The action queue, incidents, or recent event feed could not be loaded."
+          title="Dashboard is unavailable"
+          description="Could not load dashboard data. Please try again."
           onAction={() => {
             void operationsQuery.refetch();
           }}
         />
       ) : (
-        <>
-          <OperationsBoard userRole={userRole} data={operationsQuery.data} />
-          {showTelemetryOverview ? <DashboardTelemetryOverview selectedTrainId={selectedTrain?.id ?? null} /> : null}
-        </>
+        <OperationsBoard userRole={userRole} data={operationsQuery.data} />
       )}
     </div>
   );
 }
 
-function getDashboardCopy(userRole: string, selectedTrainLabel: string | null, selectedTrainCode: string | null) {
-  const selectedTrainCopy =
-    selectedTrainLabel && selectedTrainCode ? `${selectedTrainLabel} - ${selectedTrainCode}` : null;
-
+function getDashboardCopy(userRole: string) {
   if (userRole === "admin") {
     return {
       eyebrow: "Admin desk",
-      title: "Control approvals, clearance, and fleet risk",
-      description: selectedTrainCopy
-        ? `Monitoring ${selectedTrainCopy} while keeping access approvals, incidents, and network health in one command view.`
-        : "Work the approval queue first, then clear departures, incidents, and telemetry gaps across the full fleet."
+      title: "Dashboard"
     };
   }
 
   if (userRole === "master") {
     return {
       eyebrow: "Master desk",
-      title: "Manage worker flow and departure readiness",
-      description: selectedTrainCopy
-        ? `Monitoring ${selectedTrainCopy} while reviewing worker requests, clearance holds, and active train issues in your scope.`
-        : "Focus on managed trains, worker access needs, and any train that cannot safely leave or continue transit."
+      title: "Dashboard"
     };
   }
 
   return {
     eyebrow: "Worker desk",
-    title: "See only the trains you can work on",
-    description: selectedTrainCopy
-      ? `Monitoring ${selectedTrainCopy} with access requests, current visible trains, and the latest changes kept close to hand.`
-      : "Keep the screen tight: request train access when needed, open only the trains in your scope, and track recent updates."
+    title: "Dashboard"
   };
 }
