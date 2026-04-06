@@ -51,9 +51,8 @@ export default function FleetPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Fleet"
-        title="Fleet overview"
-        description={`${trains.length} train${trains.length !== 1 ? "s" : ""} in your fleet.`}
+        eyebrow="Train fleet"
+        title="Fleet"
         actions={canCreateTrain ? (
           <Link href={"/trains/new" as Route} className={buttonVariants()}>
             <Plus className="mr-1.5 h-4 w-4" />
@@ -61,15 +60,6 @@ export default function FleetPage() {
           </Link>
         ) : undefined}
       />
-
-      {/* Freshness indicator */}
-      {fetchedAt ? (
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px]">
-            Last refreshed {new Date(fetchedAt).toLocaleTimeString()}
-          </Badge>
-        </div>
-      ) : null}
 
       <FleetFilters
         search={search}

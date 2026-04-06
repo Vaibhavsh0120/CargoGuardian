@@ -89,9 +89,8 @@ export default function AlertsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Alerts"
-        title="Alert center"
-        description="Review operational incidents, acknowledge active warnings, and resolve alerts once the train condition is safe again."
+        eyebrow="Operational incidents"
+        title="Alerts"
       />
 
       <AlertFilters status={status} onStatusChange={setStatus} severity={severity} onSeverityChange={setSeverity} />
