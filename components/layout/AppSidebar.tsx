@@ -25,8 +25,17 @@ const icons = {
   settings: Settings
 };
 
+const HIDDEN_ROUTES = ["/settings", "/access", "/fleet"];
+
 export function AppSidebar() {
   const pathname = usePathname();
+  const isHidden = HIDDEN_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  if (isHidden) {
+    return null;
+  }
 
   return (
     <aside className="hidden w-80 shrink-0 border-r border-border/70 bg-[linear-gradient(180deg,hsl(var(--surface-low))_0%,hsl(var(--background))_100%)] lg:flex lg:flex-col">

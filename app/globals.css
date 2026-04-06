@@ -50,12 +50,16 @@
   }
 
   @keyframes skeleton-shimmer {
-    from {
+    0% {
       transform: translateX(-100%);
     }
-
-    to {
+    
+    50% {
       transform: translateX(100%);
+    }
+    
+    100% {
+      transform: translateX(-100%);
     }
   }
 
@@ -76,7 +80,7 @@
       hsl(var(--background) / 0.72),
       transparent
     );
-    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+    animation: skeleton-shimmer 2s ease-in-out infinite;
   }
 
   .text-balance {

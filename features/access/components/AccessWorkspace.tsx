@@ -388,7 +388,7 @@ export function AccessWorkspace() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <SummaryCard
           label={reviewerMode ? "Pending reviews" : "Pending requests"}
           value={workspace.summary.pendingRequests}
@@ -410,8 +410,8 @@ export function AccessWorkspace() {
 
       <LayerSelector layers={layers} activeLayer={resolvedActiveLayer} onSelect={setActiveLayer} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_22rem]">
-        <section className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 shadow-panel">{activeContent}</section>
+      <div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
+        <section className="rounded-lg border border-border/40 bg-card/50 p-4">{activeContent}</section>
 
         <aside className="space-y-4">
           <RoleGuideCard viewerRole={viewerRole} />
@@ -485,39 +485,31 @@ function LayerSelector({
   onSelect: (layer: WorkspaceLayerKey) => void;
 }>) {
   return (
-    <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
-      {layers.map((layer) => {
-        const Icon = layer.icon;
-        const active = layer.key === activeLayer;
+    <div className="overflow-x-auto">
+      <div className="flex gap-1 border-b border-border/40 pb-0 min-w-max md:flex-wrap md:gap-2">
+        {layers.map((layer) => {
+          const Icon = layer.icon;
+          const active = layer.key === activeLayer;
 
-        return (
-          <button
-            key={layer.key}
-            type="button"
-            onClick={() => onSelect(layer.key)}
-            className={cn(
-              "rounded-[1.5rem] border p-4 text-left shadow-panel transition-colors",
-              active ? "border-primary/35 bg-primary/6" : "border-border/60 bg-card/90 hover:bg-card"
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <span
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-2xl border",
-                  active ? "border-primary/25 bg-primary/10 text-primary" : "border-border/60 bg-background/70 text-muted-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </span>
-              <Badge variant={active ? "secondary" : "outline"}>{active ? "Open" : "Layer"}</Badge>
-            </div>
-            <div className="mt-4 space-y-1">
-              <p className="font-semibold text-foreground">{layer.label}</p>
-              <p className="text-sm text-muted-foreground">{layer.description}</p>
-            </div>
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={layer.key}
+              type="button"
+              onClick={() => onSelect(layer.key)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap border-b-2 -mb-px",
+                active
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border/40"
+              )}
+              title={layer.description}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{layer.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -540,23 +532,23 @@ function RoleGuideCard({ viewerRole }: Readonly<{ viewerRole: UserRole }>) {
           };
 
   return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Role guide</p>
-      <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">{copy.title}</h2>
-      <p className="mt-2 text-sm text-muted-foreground">{copy.body}</p>
+    <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Role guide</p>
+      <h2 className="mt-1.5 font-display text-lg font-bold text-foreground">{copy.title}</h2>
+      <p className="mt-1.5 text-xs text-muted-foreground">{copy.body}</p>
     </div>
   );
 }
 
 function ScopePreviewCard({ trains }: Readonly<{ trains: AccessWorkspaceTrain[] }>) {
   return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <div className="flex items-center justify-between gap-3">
+    <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Train scope</p>
-          <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">Managed trains</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Train scope</p>
+          <h2 className="mt-1 font-display text-lg font-bold text-foreground">Managed trains</h2>
         </div>
-        <Badge variant="outline">{trains.length}</Badge>
+        <Badge variant="outline" className="shrink-0">{trains.length}</Badge>
       </div>
       {trains.length ? (
         <div className="mt-4 space-y-3">
@@ -580,10 +572,10 @@ function RequestGuideCard({
   visibleTrains: number;
 }>) {
   return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Request checklist</p>
-      <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">Work this lane cleanly</h2>
-      <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+    <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Request checklist</p>
+      <h2 className="mt-1 font-display text-lg font-bold text-foreground">Work this lane cleanly</h2>
+      <div className="mt-3 space-y-2 text-xs text-muted-foreground">
         <p>Use the exact train code from dispatch or your supervisor.</p>
         <p>Explain the pre-departure job clearly so approval can happen without extra follow-up.</p>
         <p>{pendingRequests} request(s) are still open and {visibleTrains} train(s) are currently visible to you.</p>
@@ -600,24 +592,24 @@ function ActivityPreviewCard({
   onOpenActivity?: () => void;
 }>) {
   return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Recent activity</p>
-          <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-foreground">Decision trail</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">Recent activity</p>
+          <h2 className="mt-1 font-display text-lg font-bold text-foreground">Decision trail</h2>
         </div>
         {onOpenActivity ? (
-          <Button type="button" variant="outline" size="sm" onClick={onOpenActivity}>
+          <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={onOpenActivity}>
             Open
           </Button>
         ) : null}
       </div>
       {events.length ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-3 space-y-2">
           {events.slice(0, 3).map((event) => (
-            <div key={event.id} className="rounded-2xl border border-border/60 bg-background/60 p-3">
-              <p className="font-semibold text-foreground">{event.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatRelativeTime(event.createdAt)}</p>
+            <div key={event.id} className="rounded-lg border border-border/50 bg-background/40 p-2.5">
+              <p className="text-xs font-semibold text-foreground">{event.title}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{formatRelativeTime(event.createdAt)}</p>
             </div>
           ))}
         </div>
@@ -638,12 +630,12 @@ function SummaryCard({
   description: string;
 }>) {
   return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="font-display text-4xl font-extrabold tracking-tight text-foreground">{value}</p>
+    <div className="rounded-lg border border-border/40 bg-card/50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{label}</p>
+      <div className="mt-2 flex items-end gap-2">
+        <p className="font-display text-3xl font-bold text-foreground">{value}</p>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }
@@ -659,9 +651,9 @@ function SectionHeading({
 }>) {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{eyebrow}</p>
-      <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">{title}</h2>
-      <p className="text-sm text-muted-foreground">{description}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">{eyebrow}</p>
+      <h2 className="font-display text-xl font-bold text-foreground">{title}</h2>
+      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }

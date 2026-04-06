@@ -7,7 +7,7 @@ import { AuthStatusControls } from "@/features/auth/components/AuthStatusControl
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { cn } from "@/lib/utils";
 
-const HIDDEN_ROUTES = ["/settings"];
+const HIDDEN_ROUTES = ["/settings", "/access", "/fleet"];
 
 export function AppHeader() {
   const pathname = usePathname();
