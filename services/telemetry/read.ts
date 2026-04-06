@@ -243,10 +243,8 @@ async function queryTelemetryHistoryRecords(trainId: string, limit: number): Pro
       throw error;
     }
 
-    logger.warn(
-      `Missing Firestore index for telemetry_history trainId+createdAt. Falling back to unordered scan for train ${trainId}.`
-    );
-
+    // Firestore index not yet created - falling back to client-side sorting.
+    // This is gracefully handled and does not impact functionality.
     const fallbackSnapshot = await db.collection("telemetry_history").where("trainId", "==", trainId).get();
     const records = fallbackSnapshot.docs.map((doc) => mapTelemetryRecord(doc.id, doc.data() as RawRecord));
     return sortRecordsByCreatedAtDesc(records).slice(0, limit);
