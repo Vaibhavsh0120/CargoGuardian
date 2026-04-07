@@ -51,14 +51,14 @@ export function AlertDetailPanel({
         </dl>
 
         {canManage ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex max-w-xs flex-col gap-2">
             {alert.status === "open" ? (
-              <Button disabled={isSubmitting} onClick={() => onAcknowledge?.(alert)}>
+              <Button className="w-full" disabled={isSubmitting} onClick={() => onAcknowledge?.(alert)}>
                 Acknowledge
               </Button>
             ) : null}
             {alert.status !== "resolved" ? (
-              <Button variant="outline" disabled={isSubmitting} onClick={() => onResolve?.(alert)}>
+              <Button className="w-full" variant="outline" disabled={isSubmitting} onClick={() => onResolve?.(alert)}>
                 Resolve
               </Button>
             ) : null}

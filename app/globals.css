@@ -59,6 +59,16 @@
     }
   }
 
+  @keyframes loading-line-slide {
+    0% {
+      transform: translateX(-120%);
+    }
+
+    100% {
+      transform: translateX(260%);
+    }
+  }
+
   .skeleton-block {
     position: relative;
     overflow: hidden;
@@ -77,6 +87,31 @@
       transparent
     );
     animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+
+  .loading-line-track {
+    position: relative;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 9999px;
+    background-color: hsl(var(--muted));
+  }
+
+  .loading-line-track::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    width: 38%;
+    border-radius: inherit;
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--primary) / 0.18) 0%,
+      hsl(var(--primary)) 48%,
+      hsl(var(--primary-deep)) 100%
+    );
+    box-shadow: 0 0 18px hsl(var(--primary) / 0.25);
+    animation: loading-line-slide 1.2s linear infinite;
+    will-change: transform;
   }
 
   .text-balance {

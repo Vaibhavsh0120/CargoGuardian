@@ -423,26 +423,26 @@ export function AccessWorkspace() {
 
 function getAccessTitle(viewerRole: UserRole) {
   if (viewerRole === "admin") {
-    return "Control train visibility by email";
+    return "Manage access";
   }
 
   if (viewerRole === "master") {
-    return "Review worker access inside your train scope";
+    return "Approve access";
   }
 
-  return "Request and track train access";
+  return "Request access";
 }
 
 function getAccessDescription(viewerRole: UserRole) {
   if (viewerRole === "admin") {
-    return "Admins create trains, assign master or worker visibility by email, and audit or revoke any grant from one layered workspace.";
+    return "Review incoming access requests, grant train visibility, and audit active assignments across the network.";
   }
 
   if (viewerRole === "master") {
-    return "Masters approve worker requests only for trains they manage, then delegate or revoke worker visibility without touching admin-only controls.";
+    return "Approve worker requests for your managed trains and delegate pre-clearance access when operations require it.";
   }
 
-  return "Workers request train access by train code, then follow approvals and open only the trains that remain inside pre-clearance scope.";
+  return "Request train visibility before clearance and track the latest decision updates for your work scope.";
 }
 
 function getWorkspaceLayers(viewerRole: UserRole): WorkspaceLayer[] {

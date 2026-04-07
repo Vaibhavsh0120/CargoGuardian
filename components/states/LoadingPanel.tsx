@@ -13,6 +13,7 @@ export function LoadingPanel({
       )}
     >
       <div className="space-y-4">
+        <div className="loading-line-track" aria-hidden="true" />
         <div className="space-y-2">
           <Skeleton className="h-3 w-28" />
           <Skeleton className="h-8 w-64" />

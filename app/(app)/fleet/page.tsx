@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingPanel } from "@/components/states/LoadingPanel";
 import { buttonVariants } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { FleetEmptyState } from "@/features/fleet/components/FleetEmptyState";
 import { FleetFilters } from "@/features/fleet/components/FleetFilters";
 import { FleetTable } from "@/features/fleet/components/FleetTable";
@@ -22,7 +21,6 @@ export default function FleetPage() {
     isLoading,
     isError,
     refetch,
-    fetchedAt,
     statusFilter,
     setStatusFilter,
     search,
@@ -51,9 +49,8 @@ export default function FleetPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Fleet"
-        title="Fleet overview"
-        description={`${trains.length} train${trains.length !== 1 ? "s" : ""} in your fleet.`}
+        eyebrow="Train fleet"
+        title="Fleet"
         actions={canCreateTrain ? (
           <Link href={"/trains/new" as Route} className={buttonVariants()}>
             <Plus className="mr-1.5 h-4 w-4" />
@@ -61,15 +58,6 @@ export default function FleetPage() {
           </Link>
         ) : undefined}
       />
-
-      {/* Freshness indicator */}
-      {fetchedAt ? (
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px]">
-            Last refreshed {new Date(fetchedAt).toLocaleTimeString()}
-          </Badge>
-        </div>
-      ) : null}
 
       <FleetFilters
         search={search}
