@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import { FleetPageSkeleton } from "@/components/states/PageSkeletons";
 import { buttonVariants } from "@/components/ui/button";
 import { FleetEmptyState } from "@/features/fleet/components/FleetEmptyState";
 import { FleetFilters } from "@/features/fleet/components/FleetFilters";
@@ -28,7 +28,7 @@ export default function FleetPage() {
   } = useFleet();
 
   if (isLoading) {
-    return <LoadingPanel />;
+    return <FleetPageSkeleton />;
   }
 
   if (isError) {

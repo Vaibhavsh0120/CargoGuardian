@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AlertsPageSkeleton } from "@/components/states/PageSkeletons";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
 import { toast } from "@/components/ui/toast";
 import { AlertDetailPanel } from "@/features/alerts/components/AlertDetailPanel";
 import { AlertFilters } from "@/features/alerts/components/AlertFilters";
@@ -39,7 +39,8 @@ export default function AlertsPage() {
   const alertsQuery = useQuery({
     queryKey: ["alerts", status, severity],
     queryFn: () => fetchAlerts(status, severity),
-    staleTime: 15_000
+    staleTime: 15_000,
+    placeholderData: keepPreviousData
   });
 
   useLiveRefresh({
@@ -96,7 +97,7 @@ export default function AlertsPage() {
       <AlertFilters status={status} onStatusChange={setStatus} severity={severity} onSeverityChange={setSeverity} />
 
       {alertsQuery.isLoading ? (
-        <LoadingPanel />
+        <AlertsPageSkeleton />
       ) : alertsQuery.isError ? (
         <ErrorState
           title="Alerts could not be loaded"

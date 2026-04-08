@@ -3,7 +3,7 @@
 import { Activity, Gauge, MapPinned, RadioTower, ScanLine, ShieldCheck } from "lucide-react";
 
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import { TelemetryGridSkeleton } from "@/components/states/PageSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { TelemetryFreshnessBadge } from "@/features/train-detail/components/TelemetryFreshnessBadge";
 import type { TelemetrySnapshot } from "@/types/telemetry";
@@ -21,7 +21,7 @@ type TelemetryGridProps = {
 
 export function TelemetryGrid({ telemetry, isLoading, isError, streamMode, onRetry }: TelemetryGridProps) {
   if (isLoading) {
-    return <LoadingPanel compact />;
+    return <TelemetryGridSkeleton />;
   }
 
   if (isError || !telemetry) {

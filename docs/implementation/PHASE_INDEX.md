@@ -2,7 +2,7 @@
 
 CargoGuardian is being built in controlled phases. Each phase must leave the app runnable and consistent with the operational model.
 
-Phases 1 through 7 are complete.
+Phases 1 through 8 are complete.
 
 Important architecture decisions already locked in:
 
@@ -14,7 +14,7 @@ Important architecture decisions already locked in:
 - worker visibility is pre-clearance only
 - masters can review worker access requests for trains they manage
 - future installable web-app support must keep live telemetry network-first and auto-refreshing rather than relying on manual reloads
-- future map work must distinguish planned route geometry from actual GPS travel history
+- Phase 8 route setup stores one active route document per train in `routes/{trainId}`, resolves actual stations server-side, and keeps planned geometry distinct from actual GPS breadcrumbs
 - TigerGraph remains a server-side analytics engine whose results are cached back into Firestore
 
 ## Phase Order
@@ -26,7 +26,7 @@ Important architecture decisions already locked in:
 5. Phase 5 - Device Pairing and Hardware Management `(completed)`
 6. Phase 6 - Telemetry and Real-Time Updates `(completed)`
 7. Phase 7 - Alerts, Clearance, and Event History `(completed)`
-8. Phase 8 - Map Integration
+8. Phase 8 - Map Integration `(completed)`
 9. Phase 9 - Analytics Integration
 10. Phase 10 - Dashboard Optimization and Polishing
 
@@ -41,7 +41,7 @@ Important architecture decisions already locked in:
 | 5 - Device Pairing and Hardware Management | Completed | Manual Blynk device linking, ingest route, simulator |
 | 6 - Telemetry and Real-Time Updates | Completed | Current telemetry APIs, derived speed/freshness, live dashboard and train-detail telemetry UI |
 | 7 - Alerts, Clearance, and Event History | Completed | Alert rules, request inbox UI, role-based access workspace, clearance actions, event logging, branded installable-app foundation, and action-first dashboard restructure |
-| 8 - Map Integration | Pending | Free live train map, source/destination route modeling, planned-vs-actual path overlays, incident-location support |
+| 8 - Map Integration | Completed | Leaflet/OpenStreetMap map, station-aware route setup flow, planned-vs-actual path overlays, and incident-location drill-in |
 | 9 - Analytics Integration | Pending | TigerGraph graph pipeline, train/route/corridor risk insights, and Firestore-cached analytics views |
 | 10 - Dashboard Optimization and Polishing | Pending | Final performance budgets, install QA, docs, resilience, and demo hardening |
 
@@ -93,4 +93,4 @@ A phase is complete only when:
 
 The next implementation phase is:
 
-- [phase-08-map.md](./phase-08-map.md)
+- [phase-09-analytics.md](./phase-09-analytics.md)

@@ -4,14 +4,15 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
 
 ## Current Status
 
-- Phases 1, 2, 3, 4, 5, 6, and 7 are complete.
-- Phase 8 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, 6, 7, and 8 are complete.
+- Phase 9 is the next implementation phase.
 - The implemented foundation already includes:
   - public landing page at `/` with login and signup entry points for unauthenticated visitors
   - email/password and Google auth
   - admin invite flow
   - worker/master onboarding
   - `not-set` role gating for incomplete operator accounts
+  - for admin invite flow skip `not-set` role and directly set role to admin and sent to dashboard
   - Firebase Admin session-cookie auth
   - protected dashboard shell
   - fleet list and train detail
@@ -22,7 +23,7 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
   - current telemetry APIs and train-scoped history reads
   - derived speed, freshness, stale, and offline telemetry state
   - live dashboard telemetry overview
-  - live train-detail telemetry cards, trend chart, and stream fallback
+  - live train-detail telemetry-first workspace with cards, trend chart, quick source/destination route editing, and admin CargoGuardian-side disconnect action
   - telemetry ingest endpoint
   - alert rules for overweight, underweight, stale/offline telemetry, and in-transit weight change
   - real alerts page, layered role-based access workspace, and train-scoped alert/history panels
@@ -31,13 +32,16 @@ CargoGuardian is a dashboard-first rail cargo clearance and monitoring platform 
   - action-first dashboard restructure with role-specific operator views
   - branded app identity, supplied app icon, and manifest-based installable-app foundation
   - targeted live refresh for operational screens on interval, focus, reconnect, and visibility changes
+  - `/map` operational workspace with Leaflet/OpenStreetMap tiles
+  - admin/master route setup flow with actual railway-station search, source/destination/via selection, and Firestore-cached rail-shaped geometry
+  - planned route overlays kept separate from actual telemetry breadcrumb trails
+  - incident markers that focus the latest known alert location and drill back to train detail
   - console-controlled demo publisher for deployed app sessions
   - browser-controlled demo publisher with no separate demo terminal required for normal use
   - optional manual MQTT simulator only for explicit fallback testing
 
 ## Planned Next Phases
 
-- Phase 8 will add the free map stack using planned source/destination routes, actual GPS breadcrumb trails, live train markers, and incident-location context.
 - Phase 9 will use TigerGraph server-side for train, route, and corridor risk analysis, then cache those insights back into Firestore for the UI.
 - Phase 10 will harden performance, installability, stale/offline handling, deployment docs, and demo readiness.
 
@@ -144,19 +148,22 @@ The `window.demo(...)` commands still work, but the short aliases are the intend
 
 ## Map Policy
 
-The project should not depend on paid Mapbox usage or any credit-card-gated mapping requirement.
-
-Future map work should use a free stack such as:
+CargoGuardian now uses a free map stack:
 
 - OpenStreetMap tiles
-- Leaflet or another free client library
+- Leaflet / React Leaflet
 
-The route plan should distinguish:
+The map keeps these layers distinct:
 
-- planned source/destination path geometry stored in Firestore
+- planned source/destination path geometry stored in Firestore route documents
 - actual traveled GPS breadcrumbs derived from telemetry history
 
-The current map route can stay placeholder until that phase is implemented.
+Route setup is saved server-side through CargoGuardian APIs.
+
+- operators now search real railway stations by name or code in the map workspace
+- the server resolves and stores the selected station coordinates in the route document
+- the server then shapes the planned corridor against railway infrastructure from OpenStreetMap / Overpass before caching that geometry in Firestore
+- older route documents without shaped geometry still fall back to the legacy direct polyline until they are resaved
 
 ## Local Development
 
@@ -189,6 +196,18 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+## Map Routing Configuration
+
+Optional server variables for shaped rail routing:
+
+```env
+OVERPASS_API_URL=https://overpass-api.de/api/interpreter
+OSM_CONTACT_EMAIL=
+```
+
+`OVERPASS_API_URL` lets you point CargoGuardian at a private or alternative Overpass instance.
+`OSM_CONTACT_EMAIL` is recommended when using public OpenStreetMap infrastructure so server requests include an operator contact.
 
 ## Firestore Indexes
 

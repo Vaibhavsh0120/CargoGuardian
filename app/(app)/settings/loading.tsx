@@ -1,5 +1,5 @@
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import { AppShellLoadingScreen } from "@/components/states/AppShellLoadingScreen";
 
 export default function SettingsLoading() {
-  return <LoadingPanel compact />;
+  return <AppShellLoadingScreen />;
 }

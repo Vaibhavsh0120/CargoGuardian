@@ -69,6 +69,23 @@
     }
   }
 
+  @keyframes shell-loading-fill {
+    0% {
+      transform: scaleX(0);
+      opacity: 0.85;
+    }
+
+    85% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+
+    100% {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
   .skeleton-block {
     position: relative;
     overflow: hidden;
@@ -111,6 +128,12 @@
     );
     box-shadow: 0 0 18px hsl(var(--primary) / 0.25);
     animation: loading-line-slide 1.2s linear infinite;
+    will-change: transform;
+  }
+
+  .shell-loading-progress {
+    transform-origin: left center;
+    animation: shell-loading-fill 1.35s cubic-bezier(0.22, 1, 0.36, 1) infinite;
     will-change: transform;
   }
 

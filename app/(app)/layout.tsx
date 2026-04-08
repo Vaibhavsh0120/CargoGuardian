@@ -6,14 +6,16 @@ import { ShellWarmup } from "@/components/layout/ShellWarmup";
 import { TopStatusBar } from "@/components/layout/TopStatusBar";
 import { TrainContextProvider } from "@/components/layout/TrainContextProvider";
 import { DemoConsoleBridge } from "@/components/layout/DemoConsoleBridge";
+import { listTrainSelectorItems } from "@/services/trains/read";
 
 export default async function ProtectedAppLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
-  await requireUser();
+  const user = await requireUser();
+  const initialTrainSelectorData = await listTrainSelectorItems(user);
 
   return (
-    <TrainContextProvider>
+    <TrainContextProvider initialData={initialTrainSelectorData}>
       <DemoConsoleBridge />
       <ShellWarmup />
       <div className="dashboard-shell flex h-screen overflow-hidden bg-background pb-[env(safe-area-inset-bottom)]">

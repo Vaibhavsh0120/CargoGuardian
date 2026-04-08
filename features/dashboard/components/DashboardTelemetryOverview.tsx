@@ -6,7 +6,7 @@ import type { ComponentType } from "react";
 
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import { DashboardTelemetryOverviewSkeleton } from "@/components/states/PageSkeletons";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TelemetryFreshnessBadge } from "@/features/train-detail/components/TelemetryFreshnessBadge";
@@ -37,7 +37,7 @@ export function DashboardTelemetryOverview({ selectedTrainId }: DashboardTelemet
   });
 
   if (query.isLoading) {
-    return <LoadingPanel compact />;
+    return <DashboardTelemetryOverviewSkeleton />;
   }
 
   if (query.isError) {

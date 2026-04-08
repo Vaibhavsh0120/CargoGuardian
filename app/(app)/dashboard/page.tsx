@@ -6,9 +6,9 @@ import { Plus, TrainFront } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { DashboardPageSkeleton } from "@/components/states/PageSkeletons";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
 import { buttonVariants } from "@/components/ui/button";
 import { useSession } from "@/features/auth/hooks/useSession";
 import { DashboardTelemetryOverview } from "@/features/dashboard/components/DashboardTelemetryOverview";
@@ -52,7 +52,7 @@ export default function DashboardPage() {
   });
 
   if (isLoading) {
-    return <LoadingPanel />;
+    return <DashboardPageSkeleton />;
   }
 
   if (isError) {
@@ -101,7 +101,7 @@ export default function DashboardPage() {
           actionLabel={canCreateTrain ? "Add train" : undefined}
         />
       ) : operationsQuery.isLoading ? (
-        <LoadingPanel />
+        <DashboardPageSkeleton />
       ) : operationsQuery.isError || !operationsQuery.data ? (
         <ErrorState
           title="Operational dashboard is unavailable"

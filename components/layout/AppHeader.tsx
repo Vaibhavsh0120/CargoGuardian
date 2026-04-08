@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { TrainFront } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { AuthStatusControls } from "@/features/auth/components/AuthStatusControls";
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { cn } from "@/lib/utils";
@@ -35,9 +36,10 @@ function CompactTrainSelector() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-3">
         <TrainFront className="h-4 w-4" />
-        <span>Loading...</span>
+        <Skeleton className="h-8 w-48 rounded-md" />
+        <Skeleton className="h-2.5 w-2.5 rounded-full" />
       </div>
     );
   }

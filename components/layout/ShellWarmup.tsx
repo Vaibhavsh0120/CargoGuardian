@@ -5,14 +5,25 @@ import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useSession } from "@/features/auth/hooks/useSession";
+import {
+  createFleetQueryKey,
+  DEFAULT_FLEET_LIST_PARAMS,
+  fetchFleetList
+} from "@/features/fleet/services/fleet-client";
+import { fetchMapWorkspace } from "@/features/map/services/map-client";
 import { fetchTrain } from "@/features/train-detail/services/train-client";
 import { useTrainContext } from "@/hooks/useTrainContext";
 import { desktopNavigationItems, mobileNavigationItems } from "@/lib/constants/routes";
+import type { SystemStatusSummary } from "@/services/system/system-status";
 import type { AccessWorkspaceResponse } from "@/types/access";
 import type { AlertListResponse } from "@/types/alert";
 import type { DashboardOperationsData } from "@/types/dashboard";
 import type { HistoryListResponse } from "@/types/event";
-import type { TelemetryCurrentResponse, TelemetryHistoryResponse } from "@/types/telemetry";
+import type {
+  TelemetryCurrentListResponse,
+  TelemetryCurrentResponse,
+  TelemetryHistoryResponse
+} from "@/types/telemetry";
 import type { Train } from "@/types/train";
 
 type DashboardOperationsResponse = DashboardOperationsData & {
@@ -65,6 +76,18 @@ async function fetchAlerts(): Promise<AlertListResponse> {
   return response.json() as Promise<AlertListResponse>;
 }
 
+async function fetchTelemetryOverview() {
+  const response = await fetch("/api/telemetry/current?limit=6", {
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load telemetry overview.");
+  }
+
+  return response.json() as Promise<TelemetryCurrentListResponse>;
+}
+
 async function fetchCurrentTelemetry(trainId: string): Promise<TelemetryCurrentResponse> {
   const response = await fetch(`/api/telemetry/current/${trainId}`, {
     cache: "no-store"
@@ -113,6 +136,18 @@ async function fetchTrainHistory(trainId: string): Promise<HistoryListResponse> 
   return response.json() as Promise<HistoryListResponse>;
 }
 
+async function fetchSystemStatus(): Promise<SystemStatusSummary> {
+  const response = await fetch("/api/system/status", {
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load system status.");
+  }
+
+  return response.json() as Promise<SystemStatusSummary>;
+}
+
 export function ShellWarmup() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -139,9 +174,25 @@ export function ShellWarmup() {
     }
 
     return scheduleIdleTask(() => {
+      void queryClient.ensureQueryData({
+        queryKey: createFleetQueryKey(DEFAULT_FLEET_LIST_PARAMS),
+        queryFn: () => fetchFleetList(DEFAULT_FLEET_LIST_PARAMS),
+        staleTime: 30_000
+      }).then((fleet) => {
+        fleet.trains.slice(0, 3).forEach((train) => {
+          router.prefetch(`/fleet/${train.id}`);
+        });
+      });
+
       void queryClient.prefetchQuery({
         queryKey: ["dashboard", "operations"],
         queryFn: fetchDashboardOperations,
+        staleTime: 15_000
+      });
+
+      void queryClient.prefetchQuery({
+        queryKey: ["dashboard", "telemetry-overview"],
+        queryFn: fetchTelemetryOverview,
         staleTime: 15_000
       });
 
@@ -155,6 +206,18 @@ export function ShellWarmup() {
         queryKey: ["alerts", "active", "all"],
         queryFn: fetchAlerts,
         staleTime: 15_000
+      });
+
+      void queryClient.prefetchQuery({
+        queryKey: ["map", "workspace"],
+        queryFn: fetchMapWorkspace,
+        staleTime: 15_000
+      });
+
+      void queryClient.prefetchQuery({
+        queryKey: ["shell", "system-status"],
+        queryFn: fetchSystemStatus,
+        staleTime: 30_000
       });
 
       if (user.role === "admin") {

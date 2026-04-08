@@ -15,7 +15,16 @@ export type FleetListParams = {
   limit?: number;
 };
 
-export async function fetchFleetList(params: FleetListParams = {}): Promise<FleetListResponse> {
+export const DEFAULT_FLEET_LIST_PARAMS: FleetListParams = {
+  sortBy: "label",
+  sortDir: "asc"
+};
+
+export function createFleetQueryKey(params: FleetListParams = DEFAULT_FLEET_LIST_PARAMS) {
+  return ["fleet", "trains", params] as const;
+}
+
+export async function fetchFleetList(params: FleetListParams = DEFAULT_FLEET_LIST_PARAMS): Promise<FleetListResponse> {
   const searchParams = new URLSearchParams();
 
   if (params.status) searchParams.set("status", params.status);

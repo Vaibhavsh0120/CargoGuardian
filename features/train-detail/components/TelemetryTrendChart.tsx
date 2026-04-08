@@ -13,7 +13,7 @@ import {
 
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import { TelemetryTrendChartSkeleton } from "@/components/states/PageSkeletons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TelemetryHistoryPoint } from "@/types/telemetry";
 import { Activity } from "lucide-react";
@@ -27,7 +27,7 @@ type TelemetryTrendChartProps = {
 
 export function TelemetryTrendChart({ history, isLoading, isError, onRetry }: TelemetryTrendChartProps) {
   if (isLoading) {
-    return <LoadingPanel compact />;
+    return <TelemetryTrendChartSkeleton />;
   }
 
   if (isError) {

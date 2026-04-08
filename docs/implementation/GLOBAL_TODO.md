@@ -61,7 +61,6 @@ Train documents must carry at least:
 
 ## Remaining Core Work
 
-- Build map view with live train location, source/destination route setup, planned route overlays, actual breadcrumb trails, and incident context.
 - Build analytics around cargo risk, route efficiency, incident corridors, and suspicious journey patterns.
 - Define the TigerGraph ingestion, query, and Firestore cache pipeline.
 - Add train deletion flow that also deletes the Blynk device.
@@ -81,5 +80,6 @@ Train documents must carry at least:
 - Phase 7 alert documents are intentionally one active record per train-and-rule pair, with repeated occurrences tracked in the event log rather than separate alert documents.
 - The in-transit weight-change alert currently opens when the delta is at least 750 kg and at least 5% of the previous weight; tune this against real hardware behavior if false positives appear.
 - Future PWA caching must not hide stale telemetry or delay alert freshness.
-- Future map work must keep planned route geometry separate from actual GPS breadcrumbs.
+- Phase 8 route shaping now uses server-side OpenStreetMap / Overpass rail geometry; monitor endpoint reliability and move to a dedicated Overpass instance if demo or production traffic grows materially.
+- The Phase 8 map workspace currently fetches recent telemetry history per visible train; optimize that aggregation path if fleet size or refresh frequency grows materially.
 - Access handoff is currently email-address-driven inside the app; if the product later needs notifications, add server-side email delivery rather than client-side messaging.

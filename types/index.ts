@@ -10,3 +10,5 @@ export * from "@/types/access";
 export * from "@/types/alert";
 export * from "@/types/event";
 export * from "@/types/dashboard";
+export * from "@/types/map";
+export * from "@/types/station";

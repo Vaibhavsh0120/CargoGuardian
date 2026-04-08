@@ -5,7 +5,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
+import {
+  AlertSplitPanelSkeleton,
+  TimelinePanelSkeleton,
+  TrainDetailPageSkeleton
+} from "@/components/states/PageSkeletons";
 import { toast } from "@/components/ui/toast";
 import { AlertDetailPanel } from "@/features/alerts/components/AlertDetailPanel";
 import { AlertList } from "@/features/alerts/components/AlertList";
@@ -13,6 +17,7 @@ import { useSession } from "@/features/auth/hooks/useSession";
 import { ClearanceActionPanel } from "@/features/clearance/components/ClearanceActionPanel";
 import { EventTimeline } from "@/features/history/components/EventTimeline";
 import { TrainDetailHeader } from "@/features/train-detail/components/TrainDetailHeader";
+import { TrainDangerZone } from "@/features/train-detail/components/TrainDangerZone";
 import { TelemetryGrid } from "@/features/train-detail/components/TelemetryGrid";
 import { TelemetryTrendChart } from "@/features/train-detail/components/TelemetryTrendChart";
 import { TrainOverviewGrid } from "@/features/train-detail/components/TrainOverviewGrid";
@@ -94,7 +99,9 @@ export default function TrainDetailPage({ params }: TrainDetailPageProps) {
     () => alerts.find((alert) => alert.id === selectedAlertId) ?? alerts[0] ?? null,
     [alerts, selectedAlertId]
   );
-  const canManage = sessionQuery.data?.user?.role === "admin" || sessionQuery.data?.user?.role === "master";
+  const viewerRole = sessionQuery.data?.user?.role ?? "worker";
+  const canManage = viewerRole === "admin" || viewerRole === "master";
+  const canDeleteTrain = viewerRole === "admin";
 
   useEffect(() => {
     if (!selectedAlertId && alerts[0]) {
@@ -131,7 +138,7 @@ export default function TrainDetailPage({ params }: TrainDetailPageProps) {
   }
 
   if (isLoading) {
-    return <LoadingPanel />;
+    return <TrainDetailPageSkeleton />;
   }
 
   if (isError || !train) {
@@ -150,33 +157,39 @@ export default function TrainDetailPage({ params }: TrainDetailPageProps) {
     <div className="space-y-6">
       <TrainDetailHeader train={train} />
 
-      <div className="space-y-4">
-        <TelemetryGrid
-          telemetry={telemetryQuery.telemetry}
-          isLoading={telemetryQuery.isLoading}
-          isError={telemetryQuery.isError}
-          streamMode={telemetryStream.mode}
-          onRetry={() => {
-            void telemetryQuery.refetch();
-          }}
-        />
-        <TelemetryTrendChart
-          history={historyQuery.history}
-          isLoading={historyQuery.isLoading}
-          isError={historyQuery.isError}
-          onRetry={() => {
-            void historyQuery.refetch();
-          }}
-        />
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.35fr)_24rem]">
+        <div className="space-y-4">
+          <TelemetryGrid
+            telemetry={telemetryQuery.telemetry}
+            isLoading={telemetryQuery.isLoading}
+            isError={telemetryQuery.isError}
+            streamMode={telemetryStream.mode}
+            onRetry={() => {
+              void telemetryQuery.refetch();
+            }}
+          />
+          <TelemetryTrendChart
+            history={historyQuery.history}
+            isLoading={historyQuery.isLoading}
+            isError={historyQuery.isError}
+            onRetry={() => {
+              void historyQuery.refetch();
+            }}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <RouteProgressCard train={train} canEditRoute={canManage} />
+          <ClearanceActionPanel train={train} telemetry={telemetryQuery.telemetry} canManage={canManage} />
+          <TrainOverviewGrid train={train} />
+        </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
-        <ClearanceActionPanel train={train} telemetry={telemetryQuery.telemetry} canManage={canManage} />
-
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
         {alertsQuery.isLoading ? (
-          <LoadingPanel compact />
+          <AlertSplitPanelSkeleton />
         ) : alerts.length ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:col-span-2">
             <div className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 shadow-panel">
               <div className="mb-4 space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Alerts</p>
@@ -193,21 +206,47 @@ export default function TrainDetailPage({ params }: TrainDetailPageProps) {
             />
           </div>
         ) : (
-          <EmptyState
-            title="No train-scoped alerts"
-            description="This train does not currently have an active or recently resolved alert in CargoGuardian."
-          />
+          <>
+            <EmptyState
+              title="No train-scoped alerts"
+              description="This train does not currently have an active or recently resolved alert in CargoGuardian."
+            />
+            <div className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 shadow-panel">
+              <div className="mb-4 space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Train history</p>
+                <h2 className="font-display text-2xl font-bold text-foreground">Recent operational timeline</h2>
+              </div>
+              {eventsQuery.isLoading ? (
+                <TimelinePanelSkeleton />
+              ) : eventsQuery.isError ? (
+                <ErrorState
+                  title="Train history is unavailable"
+                  description="The recent event trail for this train could not be loaded."
+                  onAction={() => {
+                    void eventsQuery.refetch();
+                  }}
+                />
+              ) : eventsQuery.data?.events.length ? (
+                <EventTimeline events={eventsQuery.data.events} />
+              ) : (
+                <EmptyState
+                  title="No operational history yet"
+                  description="Clearance actions, access events, and alerts for this train will appear here as they happen."
+                />
+              )}
+            </div>
+          </>
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      {alerts.length ? (
         <div className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 shadow-panel">
           <div className="mb-4 space-y-1">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">Train history</p>
             <h2 className="font-display text-2xl font-bold text-foreground">Recent operational timeline</h2>
           </div>
           {eventsQuery.isLoading ? (
-            <LoadingPanel compact />
+            <TimelinePanelSkeleton />
           ) : eventsQuery.isError ? (
             <ErrorState
               title="Train history is unavailable"
@@ -225,12 +264,9 @@ export default function TrainDetailPage({ params }: TrainDetailPageProps) {
             />
           )}
         </div>
+      ) : null}
 
-        <div className="space-y-4">
-          <RouteProgressCard train={train} />
-          <TrainOverviewGrid train={train} />
-        </div>
-      </div>
+      <TrainDangerZone train={train} canDelete={canDeleteTrain} />
     </div>
   );
 }

@@ -1,11 +1,5 @@
-import { RoutePlaceholder } from "@/components/layout/RoutePlaceholder";
+import { MapWorkspace } from "@/features/map/components/MapWorkspace";
 
 export default function MapPage() {
-  return (
-    <RoutePlaceholder
-      eyebrow="Map"
-      title="Route map"
-      description="Live train positions, route overlays, and location context will appear here when map services are connected."
-    />
-  );
+  return <MapWorkspace />;
 }

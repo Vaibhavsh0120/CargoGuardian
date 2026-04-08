@@ -20,12 +20,20 @@ export type TrainContextValue = {
 
 export const TrainContext = createContext<TrainContextValue | null>(null);
 
-export function TrainContextProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+export function TrainContextProvider({
+  children,
+  initialData
+}: Readonly<{
+  children: React.ReactNode;
+  initialData?: TrainSelectorResponse;
+}>) {
   const [preferredTrainId, setPreferredTrainId] = useState<string | null>(() => readSelectedTrainId());
   const trainQuery = useQuery({
     queryKey: ["shell", "trains"],
     queryFn: fetchTrainSelectorItems,
-    staleTime: 60_000
+    staleTime: 60_000,
+    initialData,
+    initialDataUpdatedAt: initialData ? new Date(initialData.fetchedAt).getTime() : undefined
   });
   const refresh = trainQuery.refetch;
   const trains = useMemo(() => trainQuery.data?.trains ?? [], [trainQuery.data?.trains]);

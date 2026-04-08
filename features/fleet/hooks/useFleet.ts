@@ -1,9 +1,14 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useDeferredValue, useState } from "react";
 
-import { fetchFleetList, type FleetListParams } from "@/features/fleet/services/fleet-client";
+import {
+  createFleetQueryKey,
+  DEFAULT_FLEET_LIST_PARAMS,
+  fetchFleetList,
+  type FleetListParams
+} from "@/features/fleet/services/fleet-client";
 import type { TrainStatus } from "@/types/train";
 
 export function useFleet() {
@@ -11,18 +16,20 @@ export function useFleet() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<string>("label");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const deferredSearch = useDeferredValue(search);
 
   const params: FleetListParams = {
     status: statusFilter,
-    search: search || undefined,
-    sortBy,
-    sortDir
+    search: deferredSearch || undefined,
+    sortBy: sortBy || DEFAULT_FLEET_LIST_PARAMS.sortBy,
+    sortDir: sortDir || DEFAULT_FLEET_LIST_PARAMS.sortDir
   };
 
   const query = useQuery({
-    queryKey: ["fleet", "trains", params],
+    queryKey: createFleetQueryKey(params),
     queryFn: () => fetchFleetList(params),
-    staleTime: 30_000
+    staleTime: 30_000,
+    placeholderData: keepPreviousData
   });
 
   return {

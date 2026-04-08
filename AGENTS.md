@@ -57,8 +57,8 @@ Important semantics:
 
 At the time of this file:
 
-- Phases 1, 2, 3, 4, 5, 6, and 7 are complete.
-- Phase 8 is the next implementation phase.
+- Phases 1, 2, 3, 4, 5, 6, 7, and 8 are complete.
+- Phase 9 is the next implementation phase.
 - The repo already contains:
   - Next.js 15 App Router foundation
   - strict TypeScript
@@ -75,7 +75,7 @@ At the time of this file:
   - telemetry history reads
   - derived speed / freshness / offline telemetry logic
   - dashboard telemetry overview
-  - train-detail telemetry cards and trend chart
+  - train-detail telemetry-first workspace with trend chart, quick route editing, and admin CargoGuardian-side disconnect action
   - console-controlled demo publisher for deployed app sessions
   - browser-controlled demo publisher with no separate demo terminal required for normal use
   - optional manual MQTT demo simulator only for explicit local fallback testing
@@ -88,6 +88,7 @@ At the time of this file:
   - action-first operations dashboard with role-specific operator views
   - branded app identity, supplied app icon, and install manifest foundation
   - targeted live refresh on dashboard, alerts, access, and train detail
+  - Leaflet/OpenStreetMap live map workspace with station-aware route setup, planned-vs-actual overlays, and incident-location drill-in
 
 ## 5. Read Order Before Any Work
 
@@ -348,4 +349,4 @@ If one of these fails, the work is not complete.
 
 The next implementation phase is:
 
-- `docs/implementation/phase-08-map.md`
+- `docs/implementation/phase-09-analytics.md`

@@ -7,9 +7,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, Inbox, LoaderCircle, Mail, ShieldCheck, TrainFront, UserPlus, UserX } from "lucide-react";
 
 import { PageHeader } from "@/components/layout/PageHeader";
+import { AccessPageSkeleton } from "@/components/states/PageSkeletons";
 import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingPanel } from "@/components/states/LoadingPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,11 +136,25 @@ export function AccessWorkspace() {
   const assignments = workspace?.assignments ?? [];
   const recentActivity = workspace?.recentActivity ?? [];
   const visibleTrains = workspace?.visibleTrains ?? [];
+  const summary = workspace?.summary ?? {
+    pendingRequests: 0,
+    activeAssignments: 0,
+    manageableTrains: 0,
+    visibleTrains: 0
+  };
   const pendingRequests = reviewerMode ? requests.filter((request) => request.status === "pending") : requests;
   const selectedTrainId =
     manageableTrains.some((train) => train.id === trainId) ? trainId : (manageableTrains[0]?.id ?? "");
   const layers = getWorkspaceLayers(viewerRole);
   const resolvedActiveLayer = layers.some((layer) => layer.key === activeLayer) ? activeLayer : (layers[0]?.key ?? "request");
+  const layerCounts = getWorkspaceLayerCounts({
+    viewerRole,
+    pendingRequests: summary.pendingRequests,
+    assignments: summary.activeAssignments,
+    recentActivity: recentActivity.length,
+    visibleTrains: summary.visibleTrains,
+    requests: requests.length
+  });
 
   async function invalidateWorkspace() {
     await Promise.all([
@@ -247,7 +261,7 @@ export function AccessWorkspace() {
   }
 
   if (workspaceQuery.isLoading) {
-    return <LoadingPanel />;
+    return <AccessPageSkeleton />;
   }
 
   if (workspaceQuery.isError || !workspace) {
@@ -376,27 +390,12 @@ export function AccessWorkspace() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <SummaryCard
-          label={reviewerMode ? "Pending reviews" : "Pending requests"}
-          value={workspace.summary.pendingRequests}
-          description={reviewerMode ? "Requests waiting for your decision." : "Your requests still awaiting review."}
-        />
-        <SummaryCard
-          label={reviewerMode ? "Active grants" : "Visible trains"}
-          value={reviewerMode ? workspace.summary.activeAssignments : workspace.summary.visibleTrains}
-          description={reviewerMode ? "Active lower-role access you can audit." : "Trains you can open right now."}
-        />
-        <SummaryCard
-          label={reviewerMode ? "Managed trains" : "Request history"}
-          value={reviewerMode ? workspace.summary.manageableTrains : requests.length}
-          description={
-            reviewerMode ? "Train scope available for access decisions." : "Submitted requests across pending and decided states."
-          }
-        />
-      </div>
-
-      <LayerSelector layers={layers} activeLayer={resolvedActiveLayer} onSelect={setActiveLayer} />
+      <LayerSelector
+        layers={layers}
+        activeLayer={resolvedActiveLayer}
+        counts={layerCounts}
+        onSelect={setActiveLayer}
+      />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_22rem]">
         <section className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 shadow-panel">{activeContent}</section>
@@ -471,49 +470,130 @@ function getWorkspaceLayers(viewerRole: UserRole): WorkspaceLayer[] {
   ];
 }
 
+function getWorkspaceLayerCounts({
+  viewerRole,
+  pendingRequests,
+  assignments,
+  recentActivity,
+  visibleTrains,
+  requests
+}: Readonly<{
+  viewerRole: UserRole;
+  pendingRequests: number;
+  assignments: number;
+  recentActivity: number;
+  visibleTrains: number;
+  requests: number;
+}>) {
+  if (viewerRole === "admin" || viewerRole === "master") {
+    return {
+      review: pendingRequests,
+      grant: null,
+      grants: assignments,
+      activity: recentActivity
+    } satisfies Partial<Record<WorkspaceLayerKey, number | null>>;
+  }
+
+  return {
+    request: null,
+    requests,
+    trains: visibleTrains
+  } satisfies Partial<Record<WorkspaceLayerKey, number | null>>;
+}
+
 function LayerSelector({
   layers,
   activeLayer,
+  counts,
   onSelect
 }: Readonly<{
   layers: WorkspaceLayer[];
   activeLayer: WorkspaceLayerKey;
+  counts: Partial<Record<WorkspaceLayerKey, number | null>>;
   onSelect: (layer: WorkspaceLayerKey) => void;
 }>) {
-  return (
-    <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
-      {layers.map((layer) => {
-        const Icon = layer.icon;
-        const active = layer.key === activeLayer;
+  const activeLayerMeta = layers.find((layer) => layer.key === activeLayer) ?? layers[0];
+  const ActiveLayerIcon = activeLayerMeta?.icon;
+  const mobileColumnsClass = layers.length <= 3 ? "grid-cols-3" : "grid-cols-2";
+  const desktopColumnsClass = layers.length <= 3 ? "lg:grid-cols-3" : "lg:grid-cols-4";
 
-        return (
-          <button
-            key={layer.key}
-            type="button"
-            onClick={() => onSelect(layer.key)}
-            className={cn(
-              "rounded-[1.5rem] border p-4 text-left shadow-panel transition-colors",
-              active ? "border-primary/35 bg-primary/6" : "border-border/60 bg-card/90 hover:bg-card"
-            )}
-          >
-            <div className="flex items-start justify-between gap-3">
+  return (
+    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-2 shadow-panel">
+      <div
+        role="tablist"
+        aria-label="Access workspace sections"
+        className={cn("grid gap-2", mobileColumnsClass, desktopColumnsClass)}
+      >
+        {layers.map((layer) => {
+          const Icon = layer.icon;
+          const active = layer.key === activeLayer;
+          const count = counts[layer.key];
+
+          return (
+            <button
+              key={layer.key}
+              id={`access-layer-tab-${layer.key}`}
+              role="tab"
+              aria-selected={active}
+              aria-controls={`access-layer-panel-${layer.key}`}
+              type="button"
+              onClick={() => onSelect(layer.key)}
+              className={cn(
+                "group flex h-full min-w-0 w-full items-center gap-3 rounded-[1.1rem] border px-3 py-2.5 text-left transition-colors",
+                active
+                  ? "border-primary/30 bg-primary text-primary-foreground shadow-panel"
+                  : "border-transparent bg-background/70 text-muted-foreground hover:border-border/60 hover:bg-background hover:text-foreground"
+              )}
+            >
               <span
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-2xl border",
-                  active ? "border-primary/25 bg-primary/10 text-primary" : "border-border/60 bg-background/70 text-muted-foreground"
+                  "flex h-9 w-9 items-center justify-center rounded-xl border transition-colors",
+                  active
+                    ? "border-white/15 bg-white/10 text-primary-foreground"
+                    : "border-border/60 bg-card text-muted-foreground group-hover:text-foreground"
                 )}
               >
                 <Icon className="h-4 w-4" />
               </span>
-              <Badge variant={active ? "secondary" : "outline"}>{active ? "Open" : "Layer"}</Badge>
-            </div>
-            <div className="mt-4 space-y-1">
-              <p className="font-semibold text-foreground">{layer.label}</p>
-              <p className="text-sm text-muted-foreground">{layer.description}</p>
-            </div>
-          </button>
-        );
-      })}
+              <span className="min-w-0 space-y-0.5">
+                <span className="block truncate text-sm font-semibold leading-none">{layer.label}</span>
+                <span className={cn("block truncate text-[11px] leading-none", active ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                  {active ? "Open section" : "Switch section"}
+                </span>
+              </span>
+              {typeof count === "number" ? (
+                <span
+                  className={cn(
+                    "ml-1 inline-flex min-w-7 items-center justify-center rounded-full px-2 py-1 text-[11px] font-semibold",
+                    active
+                      ? "bg-white/12 text-primary-foreground"
+                      : "bg-muted text-foreground"
+                  )}
+                >
+                  {count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeLayerMeta ? (
+        <div
+          id={`access-layer-panel-${activeLayerMeta.key}`}
+          role="tabpanel"
+          aria-labelledby={`access-layer-tab-${activeLayerMeta.key}`}
+          className="mt-2 flex items-start gap-3 rounded-[1.1rem] border border-border/60 bg-background/60 px-4 py-3"
+        >
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+            {ActiveLayerIcon ? <ActiveLayerIcon className="h-4 w-4" /> : null}
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">{activeLayerMeta.label}</p>
+            <p className="text-sm text-muted-foreground">{activeLayerMeta.description}</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -620,26 +700,6 @@ function ActivityPreviewCard({
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">Access requests, approvals, and revocations will appear here.</p>
       )}
-    </div>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  description
-}: Readonly<{
-  label: string;
-  value: number;
-  description: string;
-}>) {
-  return (
-    <div className="rounded-[1.5rem] border border-border/60 bg-card/90 p-5 shadow-panel">
-      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <p className="font-display text-4xl font-extrabold tracking-tight text-foreground">{value}</p>
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }

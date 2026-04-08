@@ -67,7 +67,7 @@ It must not:
 - change routing
 - add demo labels or demo badges in the UI
 
-## Completed Through Phase 7
+## Completed Through Phase 8
 
 - Auth, onboarding, and admin invite flow
 - Protected app shell
@@ -93,9 +93,10 @@ It must not:
 - Remote and RFID-backed clearance action flow
 - Action-first dashboard restructure
 - Manifest-based install foundation, supplied app icon, and live operational refresh behavior
+- Leaflet/OpenStreetMap map workspace with live train markers, station-aware route setup, planned-vs-actual overlays, and incident-location drill-in
 
 ## Next Phase
 
 The next implementation phase is:
 
-- [phase-08-map.md](./phase-08-map.md)
+- [phase-09-analytics.md](./phase-09-analytics.md)
